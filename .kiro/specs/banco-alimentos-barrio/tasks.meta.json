@@ -1,0 +1,355 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Configurar el proyecto base y la infraestructura Firebase": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556439647
+      }
+    ],
+    "2.1 Definir todas las interfaces TypeScript del diseño (`Voluntario`, `Donacion`, `Articulo`, `FamiliaBeneficiaria`, `RegistroEntrega`, `PeriodoDistribucion`, `HerramientaDigital`, `MetricasDashboard`, `IndicadorConfig`, `MovimientoAlmacen`, `UmbralEscasez`, tipos auxiliares)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556441921
+      }
+    ],
+    "2.2 Implementar `src/shared/utils/fefo.ts` con la función `ordenarFEFO`": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556443540
+      }
+    ],
+    "2.4 Implementar `src/shared/utils/fechas.ts` con la función `clasificarEstadoCaducidad`": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556444000
+      }
+    ],
+    "2.6 Implementar `src/shared/utils/validaciones.ts` con las funciones de validación de formularios (`validarNotas`, validación de campos requeridos y rangos, mensajes de error por campo)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556444747
+      }
+    ],
+    "3.1 Crear `src/shared/components/BotonPrimario.tsx` (mínimo 44×44 px, etiqueta de texto obligatoria, sin dependencia de solo icono)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556445188
+      }
+    ],
+    "3.2 Crear `src/shared/components/MensajeConfirmacion.tsx` (texto cotidiano tras guardar/borrar/entregar)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556445471
+      }
+    ],
+    "3.3 Crear `src/shared/components/MensajeError.tsx` (indica campo incorrecto y cómo corregirlo, sin códigos técnicos)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556445728
+      }
+    ],
+    "3.4 Crear `src/shared/hooks/useOfflineStatus.ts` (suscripción a `navigator.onLine` + eventos `online`/`offline`)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556445953
+      }
+    ],
+    "3.5 Crear `src/shared/hooks/useFirestore.ts` (wrapper tipado de lecturas/escrituras Firestore con manejo de errores estandarizado)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556446303
+      }
+    ],
+    "3.6 Crear `src/shared/hooks/useSessionTimeout.ts` (detección de inactividad 30 min → aviso; 35 min → cierre de sesión + guardado de borrador en IndexedDB)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556447018
+      }
+    ],
+    "4. Checkpoint — Verificar infraestructura base": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556447539
+      }
+    ],
+    "5.1 Implementar `src/features/voluntarios/voluntariosService.ts` con las funciones `detectarDuplicado`, `filtrarPorNivel`, `validarNotas` y el CRUD de voluntarios en Firestore": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556447975
+      }
+    ],
+    "5.6 Crear `src/features/voluntarios/FormularioVoluntario.tsx` (crear y editar voluntarios; detecta duplicados; botones ≥44 px; mensajes de error no técnicos)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556448363
+      }
+    ],
+    "5.7 Crear `src/features/voluntarios/ListaVoluntarios.tsx` (tabla filtrable por nivel tecnológico; etiqueta textual del nivel junto a cada voluntario)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556448783
+      }
+    ],
+    "5.8 Crear `src/features/voluntarios/SemanaVoluntarios.tsx` (vista semanal: voluntarios activos, nombre, nivel y tareas asignadas; permite actualizar la lista)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556449395
+      }
+    ],
+    "6.1 Implementar `src/features/donaciones/donacionesService.ts` con las funciones `validarArticulosCaducados`, `obtenerHistorialDonante`, `ordenarPorFechaDescendente` y el CRUD de donaciones en Firestore": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556449768
+      }
+    ],
+    "6.6 Crear `src/features/donaciones/AlertaCaducidad.tsx` (modal de confirmación cuando algún artículo ya caducó; requiere confirmación explícita o permite cancelar)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556450271
+      }
+    ],
+    "6.7 Crear `src/features/donaciones/HistorialDonante.tsx` (muestra últimas 10 donaciones si el donante tiene ≥2 donaciones previas)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556450675
+      }
+    ],
+    "6.8 Crear `src/features/donaciones/WizardDonacion.tsx` (formulario multipaso ≤5 pasos; integra `AlertaCaducidad` e `HistorialDonante`; registra voluntarioReceptorId y timestamp UTC; soporta modo offline)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556450998
+      }
+    ],
+    "6.9 Crear `src/features/donaciones/ListaDonaciones.tsx` (historial paginado 50 registros/página, ordenado por fecha descendente)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556451285
+      }
+    ],
+    "7. Checkpoint — Verificar módulos Voluntarios y Donaciones": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556451538
+      }
+    ],
+    "8.1 Implementar `src/features/almacen/almacenService.ts` con las funciones `ordenarFEFO` (wrapper del util), `clasificarEstadoCaducidad` (wrapper), `detectarEscasez` y `generarInformeCaducados`; CRUD de artículos y movimientos en Firestore": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556451756
+      }
+    ],
+    "8.5 Crear `src/features/almacen/EtiquetaCaducidad.tsx` (badge textual: \"Urgente\" ≤3 días, \"Próximo a caducar\" 4–7 días, \"Caducado\"; visualmente diferenciables)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556451993
+      }
+    ],
+    "8.6 Crear `src/features/almacen/MovimientoAlmacen.tsx` (registra entrada / salida / descarte con motivo; actualiza stock en Firestore)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556452209
+      }
+    ],
+    "8.7 Crear `src/features/almacen/InventarioFEFO.tsx` (lista de artículos ordenada FEFO; muestra etiquetas de caducidad; artículo con stock 0 con aviso; integra `EtiquetaCaducidad` y `MovimientoAlmacen`)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556452406
+      }
+    ],
+    "8.8 Crear `src/features/almacen/InformeCaducados.tsx` (genera listado de descartados por caducidad en rango 1–365 días seleccionable)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556452612
+      }
+    ],
+    "9.1 Implementar `src/features/entregas/entregasService.ts` con las funciones `buscarFamilia`, `tieneEntregaEnPeriodo`, `calcularProgresoPeriodo`, `obtenerPendientesUrgentes` y `validarSegundaEntrega`; CRUD de RegistrosEntrega y FamiliasBeneficiarias en Firestore": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556452815
+      }
+    ],
+    "9.8 Crear `src/features/entregas/BuscadorFamilia.tsx` (búsqueda por nombre parcial o identificador exacto)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556453069
+      }
+    ],
+    "9.9 Crear `src/features/entregas/EstadoEntrega.tsx` (indicador visual diferenciado: con entrega / sin entrega en el período)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556453294
+      }
+    ],
+    "9.10 Crear `src/features/entregas/ListaPendientes.tsx` (familias sin entrega a ≤24 h del cierre de período)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556453513
+      }
+    ],
+    "9.11 Crear `src/features/entregas/FormularioEntrega.tsx` (prepara entrega con sugerencia FEFO automática; bloquea segunda entrega sin confirmación del coordinador; crea RegistroEntrega; integra `BuscadorFamilia`, `EstadoEntrega` y sugerencia del almacenService)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556453740
+      }
+    ],
+    "9.12 Crear `src/features/entregas/InformePeriodo.tsx` (resumen de entregas realizadas, familias pendientes y artículos distribuidos; contador actualizable en ≤30 s)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556453964
+      }
+    ],
+    "10. Checkpoint — Verificar módulos Almacén y Entregas": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556454188
+      }
+    ],
+    "11.1 Implementar `src/features/catalogo/catalogoService.ts` con las funciones `filtrarCatalogoPorNivel`, `ordenarCatalogoPorNivel`, `validarHerramienta` y `verificarEnlaceDisponible`; CRUD de herramientas en Firestore": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556454403
+      }
+    ],
+    "11.6 Crear `src/features/catalogo/TarjetaHerramienta.tsx` (nombre, descripción ≤80 palabras, nivel, enlace, guía de primeros pasos 3–5 pasos; muestra herramienta alternativa si el enlace falla)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556454640
+      }
+    ],
+    "11.7 Crear `src/features/catalogo/SeccionRecomendada.tsx` (herramientas del nivel del voluntario autenticado bajo etiqueta \"Recomendado para tu nivel\")": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556454835
+      }
+    ],
+    "11.8 Crear `src/features/catalogo/CatalogoHerramientas.tsx` (lista filtrable por nivel; sección recomendada en primera posición; mensaje cuando no hay herramientas para el nivel seleccionado; integra `TarjetaHerramienta` y `SeccionRecomendada`)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556455115
+      }
+    ],
+    "12.1 Implementar `src/features/dashboard/dashboardService.ts` con la función de cálculo de `MetricasDashboard` integrando datos de almacén, entregas y voluntarios; actualización automática cada 5 minutos": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556455329
+      }
+    ],
+    "12.4 Crear `src/features/dashboard/AlertaEscasez.tsx` (lista de tipos de alimento con stock bajo umbral; nombre + cantidad actual)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556455568
+      }
+    ],
+    "12.5 Crear `src/features/dashboard/AlertaUrgente.tsx` (artículos con caducidad ≤3 días; fondo visualmente diferenciado; etiqueta textual \"Urgente\")": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556455803
+      }
+    ],
+    "12.6 Crear `src/features/dashboard/FallbackDatos.tsx` (conserva últimos valores conocidos; aviso textual cuando los datos no están actualizados)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556456612
+      }
+    ],
+    "12.7 Crear `src/features/dashboard/IndicadorMetrica.tsx` (icono + etiqueta ≤4 palabras + valor numérico; navega a la sección correspondiente con filtro al hacer clic)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556457004
+      }
+    ],
+    "12.8 Crear `src/features/dashboard/PanelPrincipal.tsx` (cuadrícula responsiva de indicadores; accesible en 1 clic desde cualquier sección; legible en móvil 5\"; integra todos los sub-componentes del dashboard; muestra 5 métricas)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556457292
+      }
+    ],
+    "13.1 Configurar React Router con rutas para cada módulo (Dashboard, Voluntarios, Donaciones, Almacén, Entregas, Catálogo) y autenticación Firebase (correo/contraseña) con protección de rutas por rol (`coordinador` / `voluntario` via `customClaims`)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556457519
+      }
+    ],
+    "13.2 Crear barra de navegación superior responsiva con acceso en 1 clic al Dashboard; badge \"Sin conexión\" cuando `useOfflineStatus` detecta desconexión; integrar `useSessionTimeout`": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556457747
+      }
+    ],
+    "14. Checkpoint — Verificar todos los módulos integrados": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556457985
+      }
+    ],
+    "15.1 Crear script de seed (`src/firebase/seed.ts`) que pueble Firestore con al menos una herramienta por nivel (Básico, Intermedio, Avanzado), incluyendo la herramienta Básica orientada a registro en papel, con sus herramientas alternativas": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556458205
+      }
+    ],
+    "15.2 Crear `src/features/almacen/ConfiguracionUmbrales.tsx` (permite al coordinador definir el umbral de escasez por tipo de alimento, entre 1 y 9.999 unidades)": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556458454
+      }
+    ],
+    "16. Checkpoint final — Verificar cobertura completa y construir la PWA": [
+      {
+        "executionId": "2e046194-ec2a-4e27-83d1-c123cd2dc6ab",
+        "chatSessionId": "sess_8670ab98-0849-455b-8c98-752d2ac6260a",
+        "timestamp": 1793556458685
+      }
+    ]
+  }
+}

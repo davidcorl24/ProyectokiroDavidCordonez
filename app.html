@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banco de Alimentos del Barrio — App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --verde: #2D7D46;
+      --verde-h: #245F36;
+      --verde-claro: #52C27A;
+      --naranja: #F4A023;
+      --rojo: #E05252;
+      --azul: #3B82F6;
+      --fondo: #FAFAF5;
+      --sidebar-w: 220px;
+      --topbar-h: 60px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--fondo); color: #1a2e1e; display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar { height: var(--topbar-h); background: var(--verde); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.18); flex-shrink: 0; }
+    .topbar-left { display: flex; align-items: center; gap: 0.65rem; }
+    .topbar-logo { width: 34px; height: 34px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .topbar-title { font-size: 1rem; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+    .topbar-right { display: flex; align-items: center; gap: 0.5rem; }
+    .topbar-icon-btn { background: none; border: none; cursor: pointer; padding: 0.4rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; transition: background 0.15s; min-width: 36px; min-height: 36px; }
+    .topbar-icon-btn:hover { background: rgba(255,255,255,0.15); }
+    .notif-badge { position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; background: var(--naranja); border-radius: 50%; border: 2px solid var(--verde); }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--verde-claro); color: #fff; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .btn-salir { background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3); color: #fff; font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.15s; min-height: 34px; }
+    .btn-salir:hover { background: rgba(255,255,255,0.28); }
+    .ham-btn { display: none; background: none; border: none; cursor: pointer; padding: 0.4rem; border-radius: 8px; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; }
+    .ham-btn:hover { background: rgba(255,255,255,0.15); }
+    .app-body { display: flex; flex: 1; overflow: hidden; height: calc(100vh - var(--topbar-h)); }
+    .sidebar { width: var(--sidebar-w); background: #fff; border-right: 1px solid #e8f0eb; height: calc(100vh - var(--topbar-h)); overflow-y: auto; padding: 1rem 0.8rem; flex-shrink: 0; position: sticky; top: var(--topbar-h); display: flex; flex-direction: column; gap: 0; }
+    .nav-label { font-size: 0.66rem; font-weight: 700; color: #9eb8a4; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.6rem 0.4rem 0.3rem; margin-top: 0.4rem; }
+    .nav-label:first-child { margin-top: 0; }
+    .nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 9px; font-size: 0.875rem; font-weight: 500; color: #4a6b52; cursor: pointer; transition: background 0.13s, color 0.13s; border: none; background: none; width: 100%; text-align: left; min-height: 40px; user-select: none; }
+    .nav-item:hover { background: #e8f5ec; color: var(--verde); }
+    .nav-item.active { background: rgba(45,125,70,0.12); color: var(--verde); font-weight: 700; }
+    .nav-item svg { flex-shrink: 0; }
+    .main { flex: 1; padding: 1.8rem; overflow-y: auto; height: calc(100vh - var(--topbar-h)); }
+    .section { display: none; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1a2e1e; line-height: 1.2; }
+    .page-header p { font-size: 0.82rem; color: #7a9a82; margin-top: 0.25rem; }
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background 0.15s, box-shadow 0.15s; border: none; min-height: 44px; white-space: nowrap; }
+    .btn-primary { background: var(--verde); color: #fff; }
+    .btn-primary:hover { background: var(--verde-h); box-shadow: 0 2px 8px rgba(45,125,70,0.3); }
+    .btn-outline { background: #fff; border: 1.5px solid #d4e8da; color: var(--verde); }
+    .btn-outline:hover { background: #f0f9f3; }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.78rem; min-height: 36px; border-radius: 8px; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .alert { display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.75rem; }
+    .alert-rojo { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+    .alert-naranja { background: #fffbeb; border: 1px solid #fed7aa; color: #c2410c; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .animate-pulse { animation: pulse 1.8s cubic-bezier(0.4,0,0.6,1) infinite; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .metric-card { background: #fff; border-radius: 14px; padding: 1.1rem 1rem; border-left: 4px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .metric-card .metric-icon { margin-bottom: 0.5rem; }
+    .metric-card .metric-value { font-size: 1.9rem; font-weight: 700; line-height: 1; margin-bottom: 0.25rem; }
+    .metric-card .metric-label { font-size: 0.78rem; color: #7a9a82; font-weight: 500; }
+    .metric-verde { border-left-color: var(--verde); }
+    .metric-verde .metric-value { color: var(--verde); }
+    .metric-naranja { border-left-color: var(--naranja); }
+    .metric-naranja .metric-value { color: var(--naranja); }
+    .metric-rojo { border-left-color: var(--rojo); }
+    .metric-rojo .metric-value { color: var(--rojo); }
+    .progress-card { background: #fff; border-radius: 14px; padding: 1.25rem 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 1.5rem; }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .progress-title { font-size: 0.95rem; font-weight: 600; color: #1a2e1e; }
+    .progress-pct { font-size: 1.1rem; font-weight: 700; color: var(--verde); }
+    .progress-track { height: 10px; background: #e8f0eb; border-radius: 99px; overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--verde), var(--verde-claro)); transition: width 0.4s ease; }
+    .progress-sub { font-size: 0.78rem; color: #9eb8a4; margin-top: 0.4rem; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .vol-card { background: #fff; border-radius: 14px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
+    .vol-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--verde), var(--verde-claro)); color: #fff; font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .vol-name { font-size: 0.9rem; font-weight: 600; color: #1a2e1e; }
+    .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; }
+    .badge-verde { background: #dcfce7; color: #15803d; }
+    .badge-naranja { background: #fff7ed; color: #c2410c; }
+    .badge-azul { background: #eff6ff; color: #1d4ed8; }
+    .badge-rojo { background: #fef2f2; color: #b91c1c; }
+    .badge-gris { background: #f3f4f6; color: #6b7280; }
+    .filtros { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .filtro-btn { padding: 0.4rem 0.9rem; border-radius: 8px; border: 1.5px solid #d4e8da; background: #fff; color: #4a6b52; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.13s, color 0.13s, border-color 0.13s; min-height: 36px; }
+    .filtro-btn:hover { background: #e8f5ec; border-color: var(--verde); color: var(--verde); }
+    .filtro-btn.active { background: var(--verde); border-color: var(--verde); color: #fff; }
+    .table-wrap { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: #f6faf7; font-size: 0.75rem; font-weight: 700; color: #7a9a82; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e8f0eb; }
+    tbody tr { border-bottom: 1px solid #f0f7f2; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f9fcfa; }
+    tbody td { padding: 0.75rem 1rem; font-size: 0.85rem; color: #2a4a30; vertical-align: middle; }
+    .td-mono { font-family: 'Courier New', monospace; background: #f3f4f6; padding: 0.15rem 0.45rem; border-radius: 5px; font-size: 0.78rem; color: #374151; display: inline-block; }
+    .tool-card { background: #fff; border-radius: 14px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 0.5rem; }
+    .tool-card-header { display: flex; align-items: center; justify-content: space-between; }
+    .tool-name { font-size: 0.95rem; font-weight: 600; color: #1a2e1e; }
+    .tool-desc { font-size: 0.82rem; color: #7a9a82; line-height: 1.5; flex: 1; }
+    .tool-link { font-size: 0.78rem; color: var(--azul); text-decoration: none; font-weight: 600; }
+    .tool-link:hover { text-decoration: underline; }
+    .admin-badge { display: inline-flex; align-items: center; gap: 0.35rem; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 0.25rem 0.7rem; border-radius: 99px; font-size: 0.75rem; font-weight: 700; }
+    .notif-list { display: flex; flex-direction: column; gap: 0.5rem; background: #fff; border-radius: 14px; padding: 0.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .notif-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; border-radius: 10px; transition: background 0.13s; }
+    .notif-item:hover { background: #f6faf7; }
+    .notif-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .notif-dot-unread { background: var(--azul); }
+    .notif-dot-read { background: #d1d5db; }
+    .notif-body { flex: 1; }
+    .notif-title { font-size: 0.875rem; font-weight: 600; color: #1a2e1e; }
+    .notif-text { font-size: 0.8rem; color: #7a9a82; margin-top: 0.15rem; }
+    .notif-time { font-size: 0.72rem; color: #b0c4b6; white-space: nowrap; margin-top: 2px; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 90; }
+    /* MODALES */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:#fff; border-radius:16px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 24px 64px rgba(0,0,0,0.25); animation: modalIn 0.18s ease; }
+    @keyframes modalIn { from { opacity:0; transform:translateY(-12px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid #f0f4f1; }
+    .modal-title { font-size:1rem; font-weight:700; color:#1a2e1e; }
+    .modal-close { width:32px; height:32px; border:none; background:#f3f4f6; border-radius:8px; cursor:pointer; font-size:1.1rem; color:#6b7280; display:flex; align-items:center; justify-content:center; }
+    .modal-close:hover { background:#e5e7eb; }
+    .modal-body { padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
+    .modal-footer { padding:1rem 1.5rem; border-top:1px solid #f0f4f1; display:flex; justify-content:flex-end; gap:0.75rem; }
+    .form-group { display:flex; flex-direction:column; gap:0.35rem; }
+    .form-label { font-size:0.8rem; font-weight:600; color:#4a6b52; }
+    .form-input { padding:0.6rem 0.85rem; border:1.5px solid #d4e8da; border-radius:8px; font-family:Inter,sans-serif; font-size:0.875rem; color:#1a2e1e; transition:border-color 0.15s; min-height:42px; width:100%; }
+    .form-input:focus { outline:none; border-color:#2D7D46; box-shadow:0 0 0 3px rgba(45,125,70,0.1); }
+    .form-input.error { border-color:#E05252; }
+    .form-error { font-size:0.75rem; color:#E05252; }
+    .form-hint { font-size:0.72rem; color:#9eb8a4; }
+    .check-group { display:flex; flex-wrap:wrap; gap:0.5rem; }
+    .check-item { display:flex; align-items:center; gap:0.3rem; font-size:0.82rem; color:#4a6b52; cursor:pointer; }
+    .check-item input[type=checkbox] { accent-color:#2D7D46; width:15px; height:15px; cursor:pointer; }
+    .articulo-row { display:grid; grid-template-columns:1fr 80px 130px; gap:0.5rem; align-items:end; margin-bottom:0.5rem; }
+    .warn-box { background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:0.75rem; font-size:0.8rem; color:#c2410c; }
+    .info-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:0.75rem; font-size:0.8rem; color:#15803d; }
+    .search-results { border:1.5px solid #d4e8da; border-radius:8px; overflow:hidden; }
+    .search-result-item { padding:0.6rem 0.85rem; cursor:pointer; font-size:0.875rem; color:#1a2e1e; border-bottom:1px solid #f0f4f1; }
+    .search-result-item:last-child { border-bottom:none; }
+    .search-result-item:hover { background:#f0fdf4; }
+    /* TOAST */
+    .toast-container { position:fixed; bottom:1.5rem; right:1.5rem; z-index:300; display:flex; flex-direction:column; gap:0.5rem; pointer-events:none; }
+    .toast-item { background:#1a2e1e; color:#fff; padding:0.75rem 1.1rem; border-radius:10px; font-size:0.875rem; font-weight:500; box-shadow:0 4px 16px rgba(0,0,0,0.18); display:flex; align-items:center; gap:0.5rem; animation: toastIn 0.2s ease; max-width:320px; }
+    @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .toast-icon { color:#52C27A; font-size:1rem; }
+    /* PRINT */
+    #print-recibo { display:none; }
+    @media print {
+      body > *:not(#print-recibo) { display:none !important; }
+      #print-recibo { display:block !important; font-family:Georgia,serif; padding:2cm; }
+      #print-recibo h2 { font-size:1.5rem; margin-bottom:0.5rem; }
+      #print-recibo .recibo-folio { font-size:0.9rem; color:#555; margin-bottom:1.5rem; }
+      #print-recibo table { width:100%; border-collapse:collapse; margin:1rem 0; }
+      #print-recibo th, #print-recibo td { border:1px solid #ccc; padding:0.5rem; text-align:left; font-size:0.85rem; }
+      #print-recibo .recibo-footer { margin-top:2rem; font-style:italic; color:#555; }
+    }
+    @media (max-width: 768px) {
+      .ham-btn { display: flex; }
+      .sidebar { position: fixed; left: -260px; top: var(--topbar-h); height: calc(100% - var(--topbar-h)); z-index: 95; width: var(--sidebar-w); transition: left 0.25s ease; }
+      .sidebar.open { left: 0; }
+      .sidebar-overlay.open { display: block; }
+      .main { padding: 1rem; }
+      .metrics-grid { grid-template-columns: repeat(2,1fr); }
+      .topbar-title { font-size: 0.85rem; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .articulo-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <button class="ham-btn" onclick="toggleSidebar()" aria-label="Menú">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect y="3" width="20" height="2" rx="1" fill="white"/><rect y="9" width="20" height="2" rx="1" fill="white"/><rect y="15" width="20" height="2" rx="1" fill="white"/></svg>
+    </button>
+    <div class="topbar-logo" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 11.5 2 6.5a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 5-8 10.5-8 10.5z" stroke="white" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>
+    </div>
+    <span class="topbar-title">Banco de Alimentos</span>
+  </div>
+  <div class="topbar-right">
+    <button class="topbar-icon-btn" aria-label="Notificaciones" onclick="navTo('notificaciones')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a6 6 0 0 1 6 6v3l1.5 2.5H2.5L4 11V8a6 6 0 0 1 6-6z" stroke="white" stroke-width="1.6" fill="none"/><path d="M8.5 16.5a1.5 1.5 0 0 0 3 0" stroke="white" stroke-width="1.4" fill="none"/></svg>
+      <span class="notif-badge" id="notif-badge"></span>
+    </button>
+    <button class="topbar-icon-btn" aria-label="Configuración">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="white" stroke-width="1.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="avatar" id="user-avatar">AD</div>
+    <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+  </div>
+</header>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="app-body">
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar" role="navigation" aria-label="Navegación principal">
+  <span class="nav-label">Principal</span>
+  <button class="nav-item" data-section="dashboard" onclick="navTo('dashboard')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="1" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="10" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="10" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-item" data-section="voluntarios" onclick="navTo('voluntarios')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 16c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Voluntarios
+  </button>
+  <button class="nav-item" data-section="donaciones" onclick="navTo('donaciones')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 15S2.5 10.5 2.5 5.5a3.5 3.5 0 0 1 6.5-1.8A3.5 3.5 0 0 1 15.5 5.5C15.5 10.5 9 15 9 15z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
+    Donaciones
+  </button>
+  <button class="nav-item" data-section="almacen" onclick="navTo('almacen')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="7" width="16" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 7l8-5 8 5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 16V11h4v5" stroke="currentColor" stroke-width="1.5"/></svg>
+    Almacén
+  </button>
+  <button class="nav-item" data-section="entregas" onclick="navTo('entregas')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9l4 4 8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Entregas
+  </button>
+  <span class="nav-label">Gestión</span>
+  <button class="nav-item" data-section="catalogo" onclick="navTo('catalogo')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4h12M3 9h12M3 14h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Catálogo
+  </button>
+  <button class="nav-item" data-section="recibos" onclick="navTo('recibos')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="2" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 6h6M6 9h6M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Recibos Fiscales
+  </button>
+  <button class="nav-item" data-section="notificaciones" onclick="navTo('notificaciones')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2a5 5 0 0 1 5 5v2.5l1.5 2.5H2.5L4 9.5V7a5 5 0 0 1 5-5z" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M7.5 15.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>
+    Notificaciones
+  </button>
+</nav>
+
+<!-- MAIN -->
+<main class="main" id="main-content">
+
+<!-- DASHBOARD -->
+<section class="section" id="sec-dashboard">
+  <div class="page-header">
+    <div>
+      <h1>Panel de Control</h1>
+      <p id="fecha-dashboard">Cargando fecha…</p>
+    </div>
+    <button class="btn btn-outline" onclick="renderMetricasDashboard();showToast('Panel actualizado')">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M13 7.5A5.5 5.5 0 1 1 7.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M13 2v4h-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Actualizar
+    </button>
+  </div>
+  <div class="alert alert-rojo animate-pulse">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><circle cx="9" cy="9" r="7.5" stroke="#E05252" stroke-width="1.5"/><path d="M9 5v4M9 12.5v.5" stroke="#E05252" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span><strong>Urgente:</strong> Leche UHT (4 unid.) caduca mañana</span>
+  </div>
+  <div class="alert alert-naranja">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><path d="M9 2L1.5 15h15L9 2z" stroke="#F4A023" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 8v3M9 13v.5" stroke="#F4A023" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span><strong>Escasez:</strong> Aceite de oliva por debajo del umbral (2 unid.)</span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-card metric-verde">
+      <div class="metric-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="7" r="3.5" stroke="#2D7D46" stroke-width="1.6"/><path d="M4 19c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#2D7D46" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="metric-value" id="metric-voluntarios">6</div>
+      <div class="metric-label">Voluntarios activos</div>
+    </div>
+    <div class="metric-card metric-verde">
+      <div class="metric-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="8" width="18" height="11" rx="2" stroke="#2D7D46" stroke-width="1.6"/><path d="M2 8l9-6 9 6" stroke="#2D7D46" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+      <div class="metric-value" id="metric-almacen">0</div>
+      <div class="metric-label">Artículos en almacén</div>
+    </div>
+    <div class="metric-card metric-naranja">
+      <div class="metric-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8.5" stroke="#F4A023" stroke-width="1.6"/><path d="M11 7v4M11 14.5v.5" stroke="#F4A023" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="metric-value" id="metric-prox">0</div>
+      <div class="metric-label">Próximos a caducar</div>
+    </div>
+    <div class="metric-card metric-verde">
+      <div class="metric-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11l5 5 9-9" stroke="#2D7D46" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="metric-value" id="metric-entregas">0/0</div>
+      <div class="metric-label">Entregas período</div>
+    </div>
+    <div class="metric-card metric-rojo">
+      <div class="metric-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8.5" stroke="#E05252" stroke-width="1.6"/><path d="M7.5 7.5l7 7M14.5 7.5l-7 7" stroke="#E05252" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="metric-value">5</div>
+      <div class="metric-label">Descartados período</div>
+    </div>
+  </div>
+  <div class="progress-card">
+    <div class="progress-header">
+      <span class="progress-title">Progreso entregas del período</span>
+      <span class="progress-pct" id="dash-progress-pct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-bar" id="dash-progress-bar" style="width:0%"></div></div>
+    <p class="progress-sub" id="dash-progress-sub">Calculando…</p>
+  </div>
+</section>
+
+<!-- VOLUNTARIOS -->
+<section class="section" id="sec-voluntarios">
+  <div class="page-header">
+    <div><h1>Voluntarios</h1><p>Gestión del equipo</p></div>
+    <button class="btn btn-primary" onclick="openModal('modal-voluntario')">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Añadir voluntario
+    </button>
+  </div>
+  <div class="filtros" id="filtros-voluntarios">
+    <button class="filtro-btn active" data-nivel="todos" onclick="filtrarVoluntarios('todos',this)">Todos</button>
+    <button class="filtro-btn" data-nivel="basico" onclick="filtrarVoluntarios('basico',this)">Básico</button>
+    <button class="filtro-btn" data-nivel="intermedio" onclick="filtrarVoluntarios('intermedio',this)">Intermedio</button>
+    <button class="filtro-btn" data-nivel="avanzado" onclick="filtrarVoluntarios('avanzado',this)">Avanzado</button>
+  </div>
+  <div class="cards-grid" id="vol-grid"></div>
+</section>
+
+<!-- DONACIONES -->
+<section class="section" id="sec-donaciones">
+  <div class="page-header">
+    <div><h1>Donaciones</h1></div>
+    <button class="btn btn-primary" onclick="abrirModalDonacion()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Registrar donación
+    </button>
+  </div>
+  <div class="table-wrap">
+    <table id="tabla-donaciones">
+      <thead><tr><th>Fecha</th><th>Donante</th><th>Artículos</th><th>Voluntario receptor</th><th>Origen</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ALMACÉN -->
+<section class="section" id="sec-almacen">
+  <div class="page-header">
+    <div><h1>Almacén FEFO</h1><p>First Expired, First Out — gestión por caducidad</p></div>
+    <button class="btn btn-primary" onclick="openModal('modal-almacen-entrada')">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Registrar entrada
+    </button>
+  </div>
+  <div class="filtros" id="filtros-almacen">
+    <button class="filtro-btn active" data-filtro="todos" onclick="filtrarAlmacen('todos',this)">Todos</button>
+    <button class="filtro-btn" data-filtro="urgente" onclick="filtrarAlmacen('urgente',this)">Urgente</button>
+    <button class="filtro-btn" data-filtro="proximo" onclick="filtrarAlmacen('proximo',this)">Próximo a caducar</button>
+    <button class="filtro-btn" data-filtro="normal" onclick="filtrarAlmacen('normal',this)">Normal</button>
+    <button class="filtro-btn" data-filtro="sinstock" onclick="filtrarAlmacen('sinstock',this)">Sin stock</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Alimento</th><th>Cantidad</th><th>Caduca</th><th>Estado</th><th>Acción</th></tr></thead>
+      <tbody id="tabla-almacen"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ENTREGAS -->
+<section class="section" id="sec-entregas">
+  <div class="page-header">
+    <div>
+      <h1>Registro de Entregas <span class="badge badge-naranja" id="badge-pendientes" style="font-size:0.72rem;vertical-align:middle;margin-left:0.4rem">0 pendientes</span></h1>
+      <p>Período 26 oct – 1 nov 2026</p>
+    </div>
+    <button class="btn btn-primary" onclick="abrirNuevaEntrega(null)">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Nueva entrega
+    </button>
+  </div>
+  <div class="progress-card" style="margin-bottom:1.25rem">
+    <div class="progress-header">
+      <span class="progress-title">Progreso del período</span>
+      <span class="progress-pct" id="progress-pct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-bar" id="progress-entregas" style="width:0%"></div></div>
+    <p class="progress-sub" id="progress-sub">Calculando…</p>
+  </div>
+  <div class="table-wrap">
+    <table id="tabla-familias">
+      <thead><tr><th>Familia</th><th>Miembros</th><th>Estado</th><th>Última entrega</th><th>Acción</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CATÁLOGO -->
+<section class="section" id="sec-catalogo">
+  <div class="page-header"><div><h1>Catálogo de Herramientas</h1><p>Solo herramientas gratuitas</p></div></div>
+  <div class="filtros">
+    <button class="filtro-btn active" onclick="filtrarCatalogo('todos',this)">Todos</button>
+    <button class="filtro-btn" onclick="filtrarCatalogo('basico',this)">Básico</button>
+    <button class="filtro-btn" onclick="filtrarCatalogo('intermedio',this)">Intermedio</button>
+    <button class="filtro-btn" onclick="filtrarCatalogo('avanzado',this)">Avanzado</button>
+  </div>
+  <div class="cards-grid">
+    <div class="tool-card" data-nivel="basico">
+      <div class="tool-card-header"><span class="tool-name">🟢 Hoja de papel + bolígrafo</span><span class="badge badge-verde">Básico</span></div>
+      <p class="tool-desc">La forma más simple y accesible de registrar entregas y donaciones. No requiere electricidad ni dispositivos.</p>
+      <a class="tool-link" href="#" onclick="return false;">Sin enlace necesario</a>
+    </div>
+    <div class="tool-card" data-nivel="basico">
+      <div class="tool-card-header"><span class="tool-name">🟢 Google Forms</span><span class="badge badge-verde">Básico</span></div>
+      <p class="tool-desc">Formularios gratuitos para recopilar datos de donaciones, voluntarios y entregas desde cualquier dispositivo.</p>
+      <a class="tool-link" href="https://forms.google.com" target="_blank" rel="noopener">Abrir Google Forms →</a>
+    </div>
+    <div class="tool-card" data-nivel="intermedio">
+      <div class="tool-card-header"><span class="tool-name">🟡 Google Sheets</span><span class="badge badge-naranja">Intermedio</span></div>
+      <p class="tool-desc">Hojas de cálculo colaborativas en la nube. Ideal para llevar el inventario y un registro histórico de operaciones.</p>
+      <a class="tool-link" href="https://sheets.google.com" target="_blank" rel="noopener">Abrir Google Sheets →</a>
+    </div>
+    <div class="tool-card" data-nivel="intermedio">
+      <div class="tool-card-header"><span class="tool-name">🟡 Trello</span><span class="badge badge-naranja">Intermedio</span></div>
+      <p class="tool-desc">Tablero kanban gratuito para gestionar tareas del banco de alimentos, turnos de voluntarios y flujos de trabajo.</p>
+      <a class="tool-link" href="https://trello.com" target="_blank" rel="noopener">Abrir Trello →</a>
+    </div>
+    <div class="tool-card" data-nivel="avanzado">
+      <div class="tool-card-header"><span class="tool-name">🔴 Esta aplicación (PWA)</span><span class="badge badge-azul">Avanzado</span></div>
+      <p class="tool-desc">Aplicación web progresiva con gestión completa de almacén FEFO, entregas, voluntarios y recibos fiscales. Coste cero.</p>
+      <a class="tool-link" href="app.html">Estás aquí →</a>
+    </div>
+  </div>
+</section>
+
+<!-- RECIBOS FISCALES -->
+<section class="section" id="sec-recibos">
+  <div class="page-header">
+    <div>
+      <h1>Recibos Fiscales
+        <span class="admin-badge" style="font-size:0.7rem;margin-left:0.5rem;vertical-align:middle">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="5" width="8" height="6" rx="1.5" stroke="#c2410c" stroke-width="1.2"/><path d="M4 5V3.5a2 2 0 1 1 4 0V5" stroke="#c2410c" stroke-width="1.2"/></svg>
+          Solo Administrador
+        </span>
+      </h1>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-recibo')">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Generar recibo
+    </button>
+  </div>
+  <div class="table-wrap">
+    <table id="tabla-recibos">
+      <thead><tr><th>Folio</th><th>Donante</th><th>Fecha donación</th><th>Generado</th><th>Estado</th><th>Descarga</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- NOTIFICACIONES -->
+<section class="section" id="sec-notificaciones">
+  <div class="page-header">
+    <div><h1>Notificaciones</h1><p>Últimas alertas</p></div>
+    <button class="btn btn-outline" onclick="marcarLeidas()">Marcar todas como leídas</button>
+  </div>
+  <div class="notif-list">
+    <div class="notif-item">
+      <div class="notif-dot notif-dot-unread"></div>
+      <div class="notif-body"><div class="notif-title">⚠ Caducidad urgente</div><div class="notif-text">Leche UHT (4 unidades) caduca mañana. Prioritario para próxima entrega.</div></div>
+      <div class="notif-time">Hace 15 min</div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-dot notif-dot-unread"></div>
+      <div class="notif-body"><div class="notif-title">📦 Escasez de stock</div><div class="notif-text">Aceite de oliva por debajo del umbral mínimo. Quedan 2 unidades.</div></div>
+      <div class="notif-time">Hace 1 h</div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-dot notif-dot-unread"></div>
+      <div class="notif-body"><div class="notif-title">🔄 Segunda entrega autorizada</div><div class="notif-text">Familia Jiménez ha recibido autorización para una segunda entrega esta semana.</div></div>
+      <div class="notif-time">Hace 3 h</div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-dot notif-dot-read"></div>
+      <div class="notif-body"><div class="notif-title">✅ Sincronización completada</div><div class="notif-text">Los datos se han sincronizado correctamente con Google Sheets.</div></div>
+      <div class="notif-time">Ayer</div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div><!-- /app-body -->
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- PRINT RECIBO -->
+<div id="print-recibo"></div>
+
+<!-- ===== MODAL: AÑADIR VOLUNTARIO ===== -->
+<div class="modal-overlay" id="modal-voluntario" onclick="handleOverlayClick(event,'modal-voluntario')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Añadir Voluntario</span>
+      <button class="modal-close" onclick="closeModal('modal-voluntario')" aria-label="Cerrar">✕</button>
+    </div>
+    <form id="form-voluntario" onsubmit="return false;">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="vol-nombre">Nombre completo *</label>
+          <input class="form-input" type="text" id="vol-nombre" maxlength="100" placeholder="Ej: María García" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="vol-tel">Teléfono</label>
+          <input class="form-input" type="tel" id="vol-tel" placeholder="Ej: 612345678" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="vol-email">Email</label>
+          <input class="form-input" type="email" id="vol-email" placeholder="Ej: maria@ejemplo.com" />
+          <span class="form-hint">Proporciona al menos teléfono o email</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="vol-nivel">Nivel tecnológico</label>
+          <select class="form-input" id="vol-nivel">
+            <option value="basico">Básico</option>
+            <option value="intermedio">Intermedio</option>
+            <option value="avanzado">Avanzado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Días disponibles</label>
+          <div class="check-group">
+            <label class="check-item"><input type="checkbox" name="vol-dia" value="lun"> Lun</label>
+            <label class="check-item"><input type="checkbox" name="vol-dia" value="mar"> Mar</label>
+            <label class="check-item"><input type="checkbox" name="vol-dia" value="mie"> Mié</label>
+            <label class="check-item"><input type="checkbox" name="vol-dia" value="jue"> Jue</label>
+            <label class="check-item"><input type="checkbox" name="vol-dia" value="vie"> Vie</label>
+            <label class="check-item"><input type="checkbox" name="vol-dia" value="sab"> Sáb</label>
+            <label class="check-item"><input type="checkbox" name="vol-dia" value="dom"> Dom</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="vol-notas">Notas</label>
+          <textarea class="form-input" id="vol-notas" maxlength="500" placeholder="Observaciones opcionales..." rows="3" style="min-height:80px;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-voluntario')">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="guardarVoluntario()">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: REGISTRAR DONACIÓN ===== -->
+<div class="modal-overlay" id="modal-donacion" onclick="handleOverlayClick(event,'modal-donacion')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Registrar Donación</span>
+      <button class="modal-close" onclick="closeModal('modal-donacion')" aria-label="Cerrar">✕</button>
+    </div>
+    <form id="form-donacion" onsubmit="return false;">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="don-donante">Nombre del donante</label>
+          <input class="form-input" type="text" id="don-donante" placeholder="Ej: Supermercado Paco" />
+          <span class="form-hint">Opcional — se registrará como "Donante anónimo" si se deja vacío</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="don-fecha">Fecha y hora de recepción</label>
+          <input class="form-input" type="datetime-local" id="don-fecha" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Artículos</label>
+          <div id="articulos-container">
+            <div class="articulo-row" id="art-row-1">
+              <div class="form-group" style="margin:0"><span class="form-hint">Nombre</span><input class="form-input" type="text" id="art-nombre-1" placeholder="Alimento" /></div>
+              <div class="form-group" style="margin:0"><span class="form-hint">Cant.</span><input class="form-input" type="number" min="1" max="9999" id="art-cant-1" placeholder="0" /></div>
+              <div class="form-group" style="margin:0"><span class="form-hint">Caducidad</span><input class="form-input" type="date" id="art-cad-1" onchange="checkCaducidades()" /></div>
+            </div>
+          </div>
+          <div id="don-cad-warn" class="warn-box" style="display:none;margin-top:0.5rem">
+            ⚠ Uno o más artículos ya han caducado.
+            <label class="check-item" style="margin-top:0.4rem;display:flex"><input type="checkbox" id="don-confirm-cad"> Confirmar de todas formas</label>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" style="margin-top:0.5rem;align-self:flex-start" onclick="addArticuloRow()">＋ Añadir otro artículo</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-donacion')">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="guardarDonacion()">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: REGISTRAR ENTRADA ALMACÉN ===== -->
+<div class="modal-overlay" id="modal-almacen-entrada" onclick="handleOverlayClick(event,'modal-almacen-entrada')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Registrar Entrada al Almacén</span>
+      <button class="modal-close" onclick="closeModal('modal-almacen-entrada')" aria-label="Cerrar">✕</button>
+    </div>
+    <form id="form-almacen" onsubmit="return false;">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="alm-nombre">Tipo de alimento *</label>
+          <input class="form-input" type="text" id="alm-nombre" placeholder="Ej: Arroz blanco" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="alm-cantidad">Cantidad *</label>
+          <input class="form-input" type="number" id="alm-cantidad" min="1" max="9999" placeholder="0" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="alm-caducidad">Fecha de caducidad *</label>
+          <input class="form-input" type="date" id="alm-caducidad" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="alm-donante">Donante (opcional)</label>
+          <input class="form-input" type="text" id="alm-donante" placeholder="Opcional" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-almacen-entrada')">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="guardarEntradaAlmacen()">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: ENTREGAR (desde almacén) ===== -->
+<div class="modal-overlay" id="modal-entregar" onclick="handleOverlayClick(event,'modal-entregar')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="entregar-titulo">Confirmar entrega</span>
+      <button class="modal-close" onclick="closeModal('modal-entregar')" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="entregar-familia">¿A qué familia?</label>
+        <select class="form-input" id="entregar-familia">
+          <option value="">— Selecciona familia —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="entregar-cantidad">Cantidad a entregar</label>
+        <input class="form-input" type="number" id="entregar-cantidad" min="1" value="1" />
+        <span class="form-hint" id="entregar-max">Máximo: —</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-entregar')">Cancelar</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="guardarEntrega()">Registrar entrega</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: NUEVA ENTREGA (familias) ===== -->
+<div class="modal-overlay" id="modal-nueva-entrega" onclick="handleOverlayClick(event,'modal-nueva-entrega')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Nueva Entrega</span>
+      <button class="modal-close" onclick="closeModal('modal-nueva-entrega')" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ne-familia-id" value="" />
+      <div class="form-group">
+        <label class="form-label" for="ne-buscar">Buscar familia</label>
+        <input class="form-input" type="text" id="ne-buscar" placeholder="Escribe el nombre de la familia…" oninput="buscarFamiliaLive()" autocomplete="off" />
+        <div id="ne-resultado" class="search-results" style="display:none"></div>
+      </div>
+      <div id="ne-warning" class="warn-box" style="display:none">
+        <div id="ne-warning-text"></div>
+        <label class="check-item" style="margin-top:0.5rem;display:flex"><input type="checkbox" id="ne-confirm-coord"> Confirmo como coordinador</label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Artículos a entregar</label>
+        <div id="ne-articulos" class="check-group" style="flex-direction:column;gap:0.4rem"></div>
+        <span class="form-hint" id="ne-articulos-hint"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-nueva-entrega')">Cancelar</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="guardarNuevaEntrega()">Registrar entrega</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: GENERAR RECIBO ===== -->
+<div class="modal-overlay" id="modal-recibo" onclick="handleOverlayClick(event,'modal-recibo')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Generar Recibo Fiscal</span>
+      <button class="modal-close" onclick="closeModal('modal-recibo')" aria-label="Cerrar">✕</button>
+    </div>
+    <form id="form-recibo" onsubmit="return false;">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="rec-donante-sel">Donante *</label>
+          <select class="form-input" id="rec-donante-sel" onchange="toggleOtroDonante()">
+            <option value="">— Selecciona donante —</option>
+          </select>
+        </div>
+        <div class="form-group" id="rec-donante-otro-wrap" style="display:none">
+          <label class="form-label" for="rec-donante-otro">Nombre del donante</label>
+          <input class="form-input" type="text" id="rec-donante-otro" placeholder="Nombre completo" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rec-fecha">Fecha de la donación *</label>
+          <input class="form-input" type="date" id="rec-fecha" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rec-desc">Descripción / artículos</label>
+          <textarea class="form-input" id="rec-desc" rows="3" placeholder="Ej: 24 artículos de alimentación variada…" style="min-height:80px;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rec-banco">Banco de alimentos</label>
+          <input class="form-input" type="text" id="rec-banco" value="Banco de Alimentos del Barrio" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rec-direccion">Dirección</label>
+          <input class="form-input" type="text" id="rec-direccion" value="Barrio Centro, s/n" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-recibo')">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="guardarRecibo()">Generar recibo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Cargar config de Firebase -->
+<script src="firebase-config.js"></script>
+<!-- Firebase Auth: cierre de sesión real y verificación de sesión activa -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+  const config = window.FIREBASE_CONFIG;
+  if (config && config.apiKey && config.apiKey !== 'TU_API_KEY') {
+    const app = initializeApp(config);
+    const auth = getAuth(app);
+
+    // Exponer signOut para la función cerrarSesion()
+    window.firebaseSignOut = function() { return signOut(auth); };
+
+    // Verificar que hay sesión activa
+    onAuthStateChanged(auth, function(user) {
+      if (!user && !sessionStorage.getItem('bab_user')) {
+        // Sin sesión → redirigir al login
+        window.location.href = 'index.html';
+      }
+    });
+  }
+</script>
+
+<script>
+// -------------------------------------------------------
+// STATE
+// -------------------------------------------------------
+var state = {
+  voluntarios: [
+    {id:1, nombre:'María García',    nivel:'basico',     dias:['lun','mar'],       notas:''},
+    {id:2, nombre:'José López',      nivel:'intermedio', dias:['mie','jue'],       notas:''},
+    {id:3, nombre:'Carmen Ruiz',     nivel:'basico',     dias:['vie'],             notas:''},
+    {id:4, nombre:'Ana Martínez',    nivel:'avanzado',   dias:['lun','mie','vie'], notas:''},
+    {id:5, nombre:'Pedro Fernández', nivel:'intermedio', dias:['mar','jue'],       notas:''},
+    {id:6, nombre:'Lucía Hernández', nivel:'basico',     dias:['sab'],             notas:''}
+  ],
+  donaciones: [
+    {id:1, donante:'Supermercado Paco',    fecha:'2026-10-28', articulos:24, voluntario:'María García',    offline:true},
+    {id:2, donante:'Panadería La Espiga',  fecha:'2026-10-25', articulos:8,  voluntario:'José López',      offline:true},
+    {id:3, donante:'Mercadona',            fecha:'2026-10-22', articulos:36, voluntario:'Ana Martínez',    offline:false},
+    {id:4, donante:'Vecinos del Barrio',   fecha:'2026-10-20', articulos:12, voluntario:'Carmen Ruiz',     offline:true},
+    {id:5, donante:'Asociación Solidaria', fecha:'2026-10-15', articulos:18, voluntario:'Pedro Fernández', offline:false}
+  ],
+  almacen: [
+    {id:1, nombre:'Leche UHT',       cantidad:4,  caducidad:'2026-11-01', estado:'urgente'},
+    {id:2, nombre:'Pan de molde',    cantidad:12, caducidad:'2026-11-03', estado:'proximo'},
+    {id:3, nombre:'Yogur natural',   cantidad:8,  caducidad:'2026-11-05', estado:'proximo'},
+    {id:4, nombre:'Arroz blanco',    cantidad:25, caducidad:'2027-02-15', estado:'normal'},
+    {id:5, nombre:'Aceite de oliva', cantidad:2,  caducidad:'2027-03-20', estado:'normal'},
+    {id:6, nombre:'Lentejas',        cantidad:18, caducidad:'2027-06-10', estado:'normal'},
+    {id:7, nombre:'Mermelada fresa', cantidad:0,  caducidad:'',           estado:'sinstock'}
+  ],
+  familias: [
+    {id:1, nombre:'Familia Rodríguez', miembros:4, entregado:true,  fechaEntrega:'28 oct 10:32', segundaEntrega:false},
+    {id:2, nombre:'Familia Torres',    miembros:2, entregado:true,  fechaEntrega:'29 oct 09:15', segundaEntrega:false},
+    {id:3, nombre:'Familia Sánchez',   miembros:6, entregado:false, fechaEntrega:'',             segundaEntrega:false},
+    {id:4, nombre:'Familia Moreno',    miembros:3, entregado:false, fechaEntrega:'',             segundaEntrega:false},
+    {id:5, nombre:'Familia Jiménez',   miembros:5, entregado:true,  fechaEntrega:'27 oct',       segundaEntrega:true}
+  ],
+  recibos: [
+    {id:1, folio:'2026-005', donante:'Supermercado Paco',       fechaDonacion:'2026-10-28', fechaGen:'2026-10-29', estado:'vigente', descripcion:'24 artículos varios'},
+    {id:2, folio:'2026-004', donante:'Panadería La Espiga',      fechaDonacion:'2026-10-21', fechaGen:'2026-10-22', estado:'vigente', descripcion:'8 panes y bollería'},
+    {id:3, folio:'2026-003', donante:'Mercadona',                fechaDonacion:'2026-10-14', fechaGen:'2026-10-15', estado:'anulado', descripcion:'36 productos'},
+    {id:4, folio:'2026-003-R', donante:'Mercadona (corrección)', fechaDonacion:'2026-10-14', fechaGen:'2026-10-16', estado:'vigente', descripcion:'36 productos (corrección)'}
+  ],
+  nextReciboNum: 6,
+  nextVolId: 7
+};
+
+// -------------------------------------------------------
+// HELPERS
+// -------------------------------------------------------
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatFecha(iso) {
+  if (!iso) return '—';
+  var p = iso.split('-');
+  if (p.length < 3) return iso;
+  var meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return parseInt(p[2],10) + ' ' + meses[parseInt(p[1],10)-1] + ' ' + p[0];
+}
+
+// -------------------------------------------------------
+// NAVEGACIÓN
+// -------------------------------------------------------
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(function(s) { s.style.display = 'none'; });
+  var sec = document.getElementById('sec-' + id);
+  if (sec) sec.style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var navBtn = document.querySelector('[data-section="' + id + '"]');
+  if (navBtn) navBtn.classList.add('active');
+}
+function navTo(id) { showSection(id); closeSidebar(); }
+
+// -------------------------------------------------------
+// SIDEBAR MÓVIL
+// -------------------------------------------------------
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// -------------------------------------------------------
+// MODALES
+// -------------------------------------------------------
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+function handleOverlayClick(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(function(m) { m.classList.remove('open'); });
+    document.body.style.overflow = '';
+  }
+});
+
+// -------------------------------------------------------
+// TOAST
+// -------------------------------------------------------
+function showToast(msg) {
+  var c = document.getElementById('toast-container');
+  while (c.firstChild) c.removeChild(c.firstChild);
+  var t = document.createElement('div');
+  t.className = 'toast-item';
+  t.innerHTML = '<span class="toast-icon">✓</span><span>' + msg + '</span>';
+  c.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+}
+
+// -------------------------------------------------------
+// HELPER: marcar error inline
+// -------------------------------------------------------
+function marcarError(id, msg) {
+  var el = document.getElementById(id);
+  if (el) { el.classList.add('error'); el.focus(); setTimeout(function(){ el.classList.remove('error'); }, 2500); }
+  showToast('⚠ ' + msg);
+}
+
+// -------------------------------------------------------
+// FILTROS
+// -------------------------------------------------------
+function filtrarVoluntarios(nivel, btn) {
+  if (btn) {
+    document.querySelectorAll('#filtros-voluntarios .filtro-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    btn.dataset.nivel = nivel;
+  }
+  renderVoluntarios();
+}
+function filtrarAlmacen(estado, btn) {
+  if (btn) {
+    document.querySelectorAll('#filtros-almacen .filtro-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+  renderAlmacen();
+}
+function filtrarCatalogo(nivel, btn) {
+  document.querySelectorAll('.tool-card').forEach(function(c) {
+    c.style.display = (nivel === 'todos' || c.dataset.nivel === nivel) ? '' : 'none';
+  });
+  if (btn) {
+    var parent = btn.closest('.filtros');
+    if (parent) parent.querySelectorAll('.filtro-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+}
+
+// -------------------------------------------------------
+// RENDER: VOLUNTARIOS
+// -------------------------------------------------------
+function renderVoluntarios() {
+  var grid = document.getElementById('vol-grid');
+  var activeFiltro = document.querySelector('#filtros-voluntarios .filtro-btn.active');
+  var filtro = activeFiltro ? (activeFiltro.dataset.nivel || 'todos') : 'todos';
+  var lista = state.voluntarios.filter(function(v){ return filtro === 'todos' || v.nivel === filtro; });
+  grid.innerHTML = lista.map(function(v) {
+    var partes = v.nombre.split(' ');
+    var iniciales = (partes[0][0] + (partes[1] ? partes[1][0] : '')).toUpperCase();
+    var badgeClass = v.nivel === 'basico' ? 'badge-verde' : v.nivel === 'intermedio' ? 'badge-naranja' : 'badge-azul';
+    var badgeLabel = v.nivel === 'basico' ? 'Básico' : v.nivel === 'intermedio' ? 'Intermedio' : 'Avanzado';
+    return '<div class="vol-card" data-nivel="' + v.nivel + '">' +
+      '<div class="vol-avatar">' + iniciales + '</div>' +
+      '<div class="vol-name">' + escHtml(v.nombre) + '</div>' +
+      '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span></div>';
+  }).join('');
+  var mv = document.getElementById('metric-voluntarios');
+  if (mv) mv.textContent = state.voluntarios.length;
+}
+
+// -------------------------------------------------------
+// RENDER: DONACIONES
+// -------------------------------------------------------
+function renderDonaciones() {
+  var tbody = document.querySelector('#tabla-donaciones tbody');
+  tbody.innerHTML = state.donaciones.map(function(d) {
+    var badge = d.offline ? '<span class="badge badge-naranja">Offline</span>' : '<span class="badge badge-verde">En línea</span>';
+    return '<tr><td>' + formatFecha(d.fecha) + '</td><td>' + escHtml(d.donante) + '</td><td>' + d.articulos + ' items</td><td>' + escHtml(d.voluntario) + '</td><td>' + badge + '</td></tr>';
+  }).join('');
+}
+
+// -------------------------------------------------------
+// RENDER: ALMACÉN
+// -------------------------------------------------------
+function renderAlmacen() {
+  var filtroBtn = document.querySelector('#filtros-almacen .filtro-btn.active');
+  var filtro = filtroBtn ? (filtroBtn.dataset.filtro || 'todos') : 'todos';
+  var tbody = document.getElementById('tabla-almacen');
+  var badgeMap = {
+    urgente:  '<span class="badge badge-rojo animate-pulse">Urgente</span>',
+    proximo:  '<span class="badge badge-naranja">Próximo</span>',
+    normal:   '<span class="badge badge-verde">Normal</span>',
+    sinstock: '<span class="badge badge-gris">Sin stock</span>',
+    caducado: '<span class="badge badge-gris">Caducado</span>'
+  };
+  tbody.innerHTML = state.almacen.map(function(a) {
+    var show = filtro === 'todos' || a.estado === filtro;
+    var badge = badgeMap[a.estado] || '';
+    var btnEntregar = (a.estado === 'sinstock' || a.cantidad === 0)
+      ? '<button class="btn btn-sm btn-outline" disabled>Entregar</button>'
+      : '<button class="btn btn-sm btn-primary" onclick="abrirEntregarModal(' + a.id + ')">Entregar</button>';
+    return '<tr data-estado="' + a.estado + '" style="' + (show ? '' : 'display:none') + '">' +
+      '<td>' + escHtml(a.nombre) + '</td><td>' + a.cantidad + '</td><td>' + (a.caducidad || '—') + '</td><td>' + badge + '</td><td>' + btnEntregar + '</td></tr>';
+  }).join('');
+}
+
+// -------------------------------------------------------
+// RENDER: FAMILIAS
+// -------------------------------------------------------
+function renderFamilias() {
+  var tbody = document.querySelector('#tabla-familias tbody');
+  var entregadas = state.familias.filter(function(f){ return f.entregado; }).length;
+  var total = state.familias.length;
+  var pct = total > 0 ? Math.round((entregadas / total) * 100) : 0;
+
+  var peBar = document.getElementById('progress-entregas');
+  var pePct = document.getElementById('progress-pct');
+  var peSub = document.getElementById('progress-sub');
+  if (peBar) peBar.style.width = pct + '%';
+  if (pePct) pePct.textContent = pct + '%';
+  if (peSub) peSub.textContent = entregadas + ' de ' + total + ' familias atendidas';
+
+  var pendientes = state.familias.filter(function(f){ return !f.entregado; }).length;
+  var pbadge = document.getElementById('badge-pendientes');
+  if (pbadge) pbadge.textContent = pendientes + ' pendientes';
+
+  tbody.innerHTML = state.familias.map(function(f) {
+    var badge = f.segundaEntrega
+      ? '<span class="badge badge-rojo">⚠ 2ª entrega</span>'
+      : f.entregado
+        ? '<span class="badge badge-verde">✓ Entregado</span>'
+        : '<span class="badge badge-naranja">Pendiente</span>';
+    var accion = !f.entregado
+      ? '<button class="btn btn-sm btn-primary" onclick="abrirNuevaEntrega(' + f.id + ')">Registrar</button>'
+      : '—';
+    return '<tr><td>' + escHtml(f.nombre) + '</td><td>' + f.miembros + '</td><td>' + badge + '</td><td>' + (f.fechaEntrega || '—') + '</td><td>' + accion + '</td></tr>';
+  }).join('');
+}
+
+// -------------------------------------------------------
+// RENDER: RECIBOS
+// -------------------------------------------------------
+function renderRecibos() {
+  var tbody = document.querySelector('#tabla-recibos tbody');
+  tbody.innerHTML = state.recibos.map(function(r) {
+    var estadoBadge = r.estado === 'vigente' ? '<span class="badge badge-verde">Vigente</span>' : '<span class="badge badge-gris">Anulado</span>';
+    var btnPDF = r.estado === 'vigente'
+      ? '<button class="btn btn-sm btn-outline" onclick="imprimirRecibo(' + r.id + ')">📄 PDF</button>'
+      : '<button class="btn btn-sm btn-outline" disabled>📄 PDF</button>';
+    return '<tr><td><span class="td-mono">' + escHtml(r.folio) + '</span></td><td>' + escHtml(r.donante) + '</td><td>' + formatFecha(r.fechaDonacion) + '</td><td>' + formatFecha(r.fechaGen) + '</td><td>' + estadoBadge + '</td><td>' + btnPDF + '</td></tr>';
+  }).join('');
+}
+
+// -------------------------------------------------------
+// RENDER: MÉTRICAS DASHBOARD
+// -------------------------------------------------------
+function renderMetricasDashboard() {
+  var totalAlmacen = state.almacen.reduce(function(s,a){ return s + a.cantidad; }, 0);
+  var proxCaducar = state.almacen.filter(function(a){ return a.estado === 'urgente' || a.estado === 'proximo'; }).length;
+  var entregadas = state.familias.filter(function(f){ return f.entregado; }).length;
+  var total = state.familias.length;
+  var pct = total > 0 ? Math.round((entregadas / total) * 100) : 0;
+
+  var ma = document.getElementById('metric-almacen'); if (ma) ma.textContent = totalAlmacen;
+  var mp = document.getElementById('metric-prox');    if (mp) mp.textContent = proxCaducar;
+  var me = document.getElementById('metric-entregas'); if (me) me.textContent = entregadas + '/' + total;
+
+  var db = document.getElementById('dash-progress-bar'); if (db) db.style.width = pct + '%';
+  var dp = document.getElementById('dash-progress-pct'); if (dp) dp.textContent = pct + '%';
+  var ds = document.getElementById('dash-progress-sub'); if (ds) ds.textContent = entregadas + ' de ' + total + ' familias atendidas · ' + (total - entregadas) + ' pendientes';
+}
+
+// -------------------------------------------------------
+// VOLUNTARIOS — guardar
+// -------------------------------------------------------
+function guardarVoluntario() {
+  var nombre = document.getElementById('vol-nombre').value.trim();
+  var nivel  = document.getElementById('vol-nivel').value;
+  var tel    = document.getElementById('vol-tel').value.trim();
+  var email  = document.getElementById('vol-email').value.trim();
+  var notas  = document.getElementById('vol-notas').value.trim();
+  if (!nombre) { marcarError('vol-nombre', 'Escribe el nombre completo'); return; }
+  if (!tel && !email) { showToast('⚠ Añade al menos un contacto (teléfono o email)'); return; }
+  var dias = [];
+  document.querySelectorAll('#form-voluntario input[name="vol-dia"]:checked').forEach(function(cb){ dias.push(cb.value); });
+  state.voluntarios.push({ id: state.nextVolId++, nombre: nombre, nivel: nivel, dias: dias, notas: notas });
+  renderVoluntarios();
+  renderMetricasDashboard();
+  closeModal('modal-voluntario');
+  document.getElementById('form-voluntario').reset();
+  showToast('Voluntario añadido correctamente');
+}
+
+// -------------------------------------------------------
+// DONACIONES — artículo rows
+// -------------------------------------------------------
+var articuloCount = 1;
+
+function abrirModalDonacion() {
+  // Poner fecha/hora actual por defecto
+  var now = new Date();
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var local = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+  document.getElementById('don-fecha').value = local;
+  openModal('modal-donacion');
+}
+
+function addArticuloRow() {
+  var container = document.getElementById('articulos-container');
+  var rows = container.querySelectorAll('.articulo-row');
+  if (rows.length >= 5) { showToast('⚠ Máximo 5 artículos por donación'); return; }
+  articuloCount++;
+  var n = articuloCount;
+  var row = document.createElement('div');
+  row.className = 'articulo-row';
+  row.id = 'art-row-' + n;
+  row.innerHTML =
+    '<div class="form-group" style="margin:0"><span class="form-hint">Nombre</span><input class="form-input" type="text" id="art-nombre-' + n + '" placeholder="Alimento" /></div>' +
+    '<div class="form-group" style="margin:0"><span class="form-hint">Cant.</span><input class="form-input" type="number" min="1" max="9999" id="art-cant-' + n + '" placeholder="0" /></div>' +
+    '<div class="form-group" style="margin:0"><span class="form-hint">Caducidad</span><input class="form-input" type="date" id="art-cad-' + n + '" onchange="checkCaducidades()" /></div>';
+  container.appendChild(row);
+}
+
+function checkCaducidades() {
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var hayCaducado = false;
+  document.querySelectorAll('#articulos-container input[type=date]').forEach(function(inp){
+    if (inp.value) {
+      var d = new Date(inp.value + 'T00:00:00');
+      if (d < hoy) hayCaducado = true;
+    }
+  });
+  document.getElementById('don-cad-warn').style.display = hayCaducado ? 'block' : 'none';
+}
+
+function guardarDonacion() {
+  var donante  = document.getElementById('don-donante').value.trim() || 'Donante anónimo';
+  var fechaDt  = document.getElementById('don-fecha').value;
+  var nombre1  = document.getElementById('art-nombre-1').value.trim();
+  if (!nombre1) { marcarError('art-nombre-1', 'Añade al menos un artículo'); return; }
+  // Comprobar caducados sin confirmación
+  var warnBox = document.getElementById('don-cad-warn');
+  if (warnBox.style.display !== 'none' && !document.getElementById('don-confirm-cad').checked) {
+    showToast('⚠ Confirma los artículos caducados antes de guardar'); return;
+  }
+  var totalArt = document.querySelectorAll('#articulos-container .articulo-row').length;
+  var fecha = fechaDt ? fechaDt.split('T')[0] : new Date().toISOString().split('T')[0];
+  var nueva = { id: state.donaciones.length + 1, donante: donante, fecha: fecha, articulos: totalArt, voluntario: sessionStorage.getItem('bab_user') || 'Admin Demo', offline: false };
+  state.donaciones.unshift(nueva);
+  renderDonaciones();
+  closeModal('modal-donacion');
+  document.getElementById('form-donacion').reset();
+  // Reset artículos extra
+  articuloCount = 1;
+  var cont = document.getElementById('articulos-container');
+  var allRows = cont.querySelectorAll('.articulo-row');
+  for (var i = 1; i < allRows.length; i++) allRows[i].remove();
+  document.getElementById('don-cad-warn').style.display = 'none';
+  showToast('Donación registrada correctamente');
+}
+
+// -------------------------------------------------------
+// ALMACÉN — calcular estado
+// -------------------------------------------------------
+function calcularEstado(fechaCad) {
+  if (!fechaCad) return 'sinstock';
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var cad = new Date(fechaCad + 'T00:00:00');
+  var diff = Math.ceil((cad - hoy) / (1000 * 60 * 60 * 24));
+  if (diff < 0) return 'caducado';
+  if (diff <= 3) return 'urgente';
+  if (diff <= 7) return 'proximo';
+  return 'normal';
+}
+
+function guardarEntradaAlmacen() {
+  var nombre = document.getElementById('alm-nombre').value.trim();
+  var cant   = parseInt(document.getElementById('alm-cantidad').value, 10);
+  var cad    = document.getElementById('alm-caducidad').value;
+  if (!nombre) { marcarError('alm-nombre', 'Escribe el nombre del alimento'); return; }
+  if (!cant || cant < 1) { marcarError('alm-cantidad', 'Cantidad mínima 1'); return; }
+  if (!cad) { marcarError('alm-caducidad', 'Selecciona la fecha de caducidad'); return; }
+  var estado = calcularEstado(cad);
+  var nuevo = { id: Date.now(), nombre: nombre, cantidad: cant, caducidad: cad, estado: estado };
+  state.almacen.push(nuevo);
+  state.almacen.sort(function(a,b){ return (a.caducidad || '9999') > (b.caducidad || '9999') ? 1 : -1; });
+  renderAlmacen();
+  renderMetricasDashboard();
+  closeModal('modal-almacen-entrada');
+  document.getElementById('form-almacen').reset();
+  showToast('Artículo añadido al almacén');
+}
+
+// -------------------------------------------------------
+// ALMACÉN — entregar modal
+// -------------------------------------------------------
+var currentAlmacenId = null;
+
+function abrirEntregarModal(id) {
+  currentAlmacenId = id;
+  var item = state.almacen.find(function(a){ return a.id === id; });
+  if (!item) return;
+  document.getElementById('entregar-titulo').textContent = 'Entregar: ' + item.nombre;
+  var cantInput = document.getElementById('entregar-cantidad');
+  cantInput.max = item.cantidad;
+  cantInput.value = 1;
+  document.getElementById('entregar-max').textContent = 'Máximo disponible: ' + item.cantidad;
+  var sel = document.getElementById('entregar-familia');
+  sel.innerHTML = '<option value="">— Selecciona familia —</option>';
+  state.familias.forEach(function(f){
+    sel.innerHTML += '<option value="' + f.id + '">' + escHtml(f.nombre) + '</option>';
+  });
+  sel.innerHTML += '<option value="otra">Otra familia…</option>';
+  openModal('modal-entregar');
+}
+
+function guardarEntrega() {
+  var famVal = document.getElementById('entregar-familia').value;
+  var cant   = parseInt(document.getElementById('entregar-cantidad').value, 10);
+  var item   = state.almacen.find(function(a){ return a.id === currentAlmacenId; });
+  if (!item) return;
+  if (!famVal) { showToast('⚠ Selecciona una familia'); return; }
+  if (!cant || cant < 1) { showToast('⚠ Cantidad debe ser al menos 1'); return; }
+  if (cant > item.cantidad) { showToast('⚠ No hay suficiente stock (disponible: ' + item.cantidad + ')'); return; }
+  item.cantidad -= cant;
+  if (item.cantidad === 0) item.estado = 'sinstock';
+  renderAlmacen();
+  renderMetricasDashboard();
+  closeModal('modal-entregar');
+  showToast('Entrega registrada: ' + cant + ' × ' + item.nombre);
+}
+
+// -------------------------------------------------------
+// NUEVA ENTREGA — familias
+// -------------------------------------------------------
+var currentFamiliaId = null;
+
+function abrirNuevaEntrega(familiaId) {
+  currentFamiliaId = familiaId || null;
+  var ne_buscar = document.getElementById('ne-buscar');
+  ne_buscar.value = '';
+  if (familiaId) {
+    var f = state.familias.find(function(x){ return x.id === familiaId; });
+    if (f) ne_buscar.value = f.nombre;
+  }
+  document.getElementById('ne-resultado').innerHTML = '';
+  document.getElementById('ne-resultado').style.display = 'none';
+  document.getElementById('ne-warning').style.display = 'none';
+  document.getElementById('ne-warning-text').textContent = '';
+  document.getElementById('ne-confirm-coord').checked = false;
+  document.getElementById('ne-familia-id').value = familiaId || '';
+
+  // Artículos disponibles
+  var artDiv = document.getElementById('ne-articulos');
+  var disponibles = state.almacen.filter(function(a){ return a.cantidad > 0 && a.estado !== 'sinstock'; });
+  if (disponibles.length === 0) {
+    artDiv.innerHTML = '<span class="form-hint">No hay artículos disponibles en el almacén</span>';
+  } else {
+    artDiv.innerHTML = disponibles.map(function(a){
+      return '<label class="check-item"><input type="checkbox" name="ne-art" value="' + a.id + '"> ' + escHtml(a.nombre) + ' (' + a.cantidad + ' uds.)</label>';
+    }).join('');
+  }
+
+  // Si ya viene con familia pre-seleccionada, mostrar warning si aplica
+  if (familiaId) {
+    var fam = state.familias.find(function(x){ return x.id === familiaId; });
+    if (fam && fam.entregado) {
+      var warn = document.getElementById('ne-warning');
+      warn.style.display = 'block';
+      document.getElementById('ne-warning-text').innerHTML = '⚠ <strong>' + escHtml(fam.nombre) + '</strong> ya recibió entrega este período. Se requiere confirmación del coordinador.';
+    }
+  }
+  openModal('modal-nueva-entrega');
+}
+
+function buscarFamiliaLive() {
+  var q = document.getElementById('ne-buscar').value.toLowerCase().trim();
+  var res = document.getElementById('ne-resultado');
+  if (!q) { res.innerHTML = ''; res.style.display = 'none'; return; }
+  var matches = state.familias.filter(function(f){ return f.nombre.toLowerCase().indexOf(q) !== -1; });
+  if (!matches.length) {
+    res.innerHTML = '<div class="search-result-item" style="color:#9eb8a4">Sin resultados</div>';
+    res.style.display = 'block';
+    return;
+  }
+  res.innerHTML = matches.map(function(f){
+    return '<div class="search-result-item" onclick="seleccionarFamiliaEntrega(' + f.id + ')">' + escHtml(f.nombre) + ' (' + f.miembros + ' miembros)</div>';
+  }).join('');
+  res.style.display = 'block';
+}
+
+function seleccionarFamiliaEntrega(id) {
+  var f = state.familias.find(function(x){ return x.id === id; });
+  if (!f) return;
+  currentFamiliaId = id;
+  document.getElementById('ne-familia-id').value = id;
+  document.getElementById('ne-buscar').value = f.nombre;
+  var res = document.getElementById('ne-resultado');
+  res.innerHTML = '';
+  res.style.display = 'none';
+  var warn = document.getElementById('ne-warning');
+  if (f.entregado) {
+    warn.style.display = 'block';
+    document.getElementById('ne-warning-text').innerHTML = '⚠ <strong>' + escHtml(f.nombre) + '</strong> ya recibió entrega este período. Se requiere confirmación del coordinador.';
+  } else {
+    warn.style.display = 'none';
+    document.getElementById('ne-warning-text').textContent = '';
+  }
+}
+
+function guardarNuevaEntrega() {
+  var familiaId = parseInt(document.getElementById('ne-familia-id').value, 10);
+  if (!familiaId) { showToast('⚠ Selecciona una familia'); return; }
+  var familia = state.familias.find(function(f){ return f.id === familiaId; });
+  if (!familia) { showToast('⚠ Familia no encontrada'); return; }
+  if (familia.entregado && !document.getElementById('ne-confirm-coord').checked) {
+    showToast('⚠ Requiere confirmación del coordinador'); return;
+  }
+  var ahora = new Date();
+  var meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var horaStr = ahora.getDate() + ' ' + meses[ahora.getMonth()] + ' ' + pad(ahora.getHours()) + ':' + pad(ahora.getMinutes());
+  familia.entregado = true;
+  familia.fechaEntrega = horaStr;
+  if (familia.segundaEntrega) familia.segundaEntrega = false; // resolvemos el flag al confirmar
+  renderFamilias();
+  renderMetricasDashboard();
+  closeModal('modal-nueva-entrega');
+  showToast('Entrega registrada para ' + familia.nombre);
+}
+
+// -------------------------------------------------------
+// RECIBOS
+// -------------------------------------------------------
+function toggleOtroDonante() {
+  var sel = document.getElementById('rec-donante-sel');
+  var wrap = document.getElementById('rec-donante-otro-wrap');
+  wrap.style.display = sel.value === 'otro' ? 'block' : 'none';
+}
+
+function poblarSelectDonantes() {
+  var sel = document.getElementById('rec-donante-sel');
+  var current = sel.value;
+  sel.innerHTML = '<option value="">— Selecciona donante —</option>';
+  // Donantes únicos de donaciones
+  var vistos = {};
+  state.donaciones.forEach(function(d){
+    if (!vistos[d.donante]) {
+      vistos[d.donante] = true;
+      sel.innerHTML += '<option value="' + escHtml(d.donante) + '">' + escHtml(d.donante) + '</option>';
+    }
+  });
+  sel.innerHTML += '<option value="otro">Otro donante…</option>';
+  if (current) sel.value = current;
+}
+
+function guardarRecibo() {
+  var sel = document.getElementById('rec-donante-sel');
+  var donante = sel.value === 'otro'
+    ? document.getElementById('rec-donante-otro').value.trim()
+    : sel.value;
+  var fecha = document.getElementById('rec-fecha').value;
+  var desc  = document.getElementById('rec-desc').value.trim();
+  var banco = document.getElementById('rec-banco').value.trim();
+  var dir   = document.getElementById('rec-direccion').value.trim();
+  if (!donante) { showToast('⚠ Selecciona o escribe el donante'); return; }
+  if (!fecha) { marcarError('rec-fecha', 'Selecciona la fecha de la donación'); return; }
+  var anio = new Date().getFullYear();
+  var num  = String(state.nextReciboNum).padStart(3, '0');
+  var folio = anio + '-' + num;
+  state.nextReciboNum++;
+  var nuevo = { id: state.recibos.length + 1, folio: folio, donante: donante, fechaDonacion: fecha, fechaGen: new Date().toISOString().split('T')[0], estado: 'vigente', descripcion: desc || '—', banco: banco, direccion: dir };
+  state.recibos.unshift(nuevo);
+  renderRecibos();
+  closeModal('modal-recibo');
+  document.getElementById('form-recibo').reset();
+  document.getElementById('rec-donante-otro-wrap').style.display = 'none';
+  document.getElementById('rec-banco').value = 'Banco de Alimentos del Barrio';
+  document.getElementById('rec-direccion').value = 'Barrio Centro, s/n';
+  showToast('Recibo ' + folio + ' generado correctamente');
+}
+
+function imprimirRecibo(id) {
+  var r = state.recibos.find(function(x){ return x.id === id; });
+  if (!r || r.estado === 'anulado') return;
+  var banco = r.banco || 'Banco de Alimentos del Barrio';
+  var dir   = r.direccion || 'Barrio Centro, s/n';
+  var div = document.getElementById('print-recibo');
+  div.innerHTML =
+    '<h2>' + escHtml(banco) + '</h2>' +
+    '<p style="margin-bottom:0.3rem;color:#555">' + escHtml(dir) + '</p>' +
+    '<hr style="margin:0.75rem 0;border:none;border-top:1px solid #ccc">' +
+    '<h3 style="font-size:1.2rem;margin-bottom:0.5rem">RECIBO DE DONACIÓN</h3>' +
+    '<div class="recibo-folio">Folio: ' + escHtml(r.folio) + '</div>' +
+    '<table>' +
+    '<tr><th>Campo</th><th>Detalle</th></tr>' +
+    '<tr><td>Donante</td><td>' + escHtml(r.donante) + '</td></tr>' +
+    '<tr><td>Fecha donación</td><td>' + formatFecha(r.fechaDonacion) + '</td></tr>' +
+    '<tr><td>Fecha emisión</td><td>' + formatFecha(r.fechaGen) + '</td></tr>' +
+    '<tr><td>Descripción</td><td>' + escHtml(r.descripcion) + '</td></tr>' +
+    '</table>' +
+    '<p class="recibo-footer">Gracias por su generosa donación. Este recibo acredita la entrega de los alimentos descritos.</p>';
+  window.print();
+}
+
+// -------------------------------------------------------
+// NOTIFICACIONES
+// -------------------------------------------------------
+function marcarLeidas() {
+  document.querySelectorAll('.notif-dot-unread').forEach(function(d){
+    d.classList.remove('notif-dot-unread');
+    d.classList.add('notif-dot-read');
+  });
+  var badge = document.getElementById('notif-badge');
+  if (badge) badge.style.display = 'none';
+  showToast('Todas las notificaciones marcadas como leídas');
+}
+
+// -------------------------------------------------------
+// CERRAR SESIÓN
+// -------------------------------------------------------
+function cerrarSesion() {
+  sessionStorage.removeItem('bab_user');
+  sessionStorage.removeItem('bab_email');
+  sessionStorage.removeItem('bab_photo');
+  sessionStorage.removeItem('bab_uid');
+
+  // Intentar cerrar sesión de Firebase si está disponible
+  if (window.firebaseSignOut) {
+    window.firebaseSignOut().then(function() {
+      window.location.href = 'index.html';
+    }).catch(function() {
+      window.location.href = 'index.html';
+    });
+  } else {
+    window.location.href = 'index.html';
+  }
+}
+
+// -------------------------------------------------------
+// INIT
+// -------------------------------------------------------
+window.addEventListener('DOMContentLoaded', function() {
+  if (!sessionStorage.getItem('bab_user')) sessionStorage.setItem('bab_user', 'Admin Demo');
+
+  // Fecha dashboard
+  var opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  var el = document.getElementById('fecha-dashboard');
+  if (el) el.textContent = 'Actualizado ahora · ' + new Date().toLocaleDateString('es-ES', opts);
+
+  // Avatar — foto real de Google o iniciales
+  var userName = sessionStorage.getItem('bab_user') || 'Admin Demo';
+  var userPhoto = sessionStorage.getItem('bab_photo') || '';
+  var avatarEl = document.getElementById('user-avatar');
+  if (avatarEl) {
+    if (userPhoto) {
+      avatarEl.style.cssText = 'width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--verde-claro);flex-shrink:0;border:2px solid rgba(255,255,255,0.3)';
+      avatarEl.innerHTML = '<img src="' + userPhoto + '" width="34" height="34" style="display:block;width:100%;height:100%;object-fit:cover" alt="' + userName.replace(/"/g, '') + '" onerror="this.parentNode.textContent=\'' + userName.substring(0, 2).toUpperCase() + '\'">';
+    } else {
+      var parts = userName.split(' ');
+      var initials = parts.length >= 2 ? parts[0][0] + parts[parts.length - 1][0] : userName.substring(0, 2);
+      avatarEl.textContent = initials.toUpperCase();
+    }
+  }
+
+  // Poblar select donantes recibos
+  poblarSelectDonantes();
+
+  // Render todos
+  renderVoluntarios();
+  renderDonaciones();
+  renderAlmacen();
+  renderFamilias();
+  renderRecibos();
+  renderMetricasDashboard();
+
+  // Mostrar dashboard
+  showSection('dashboard');
+});
+</script>
+</body>
+</html>
