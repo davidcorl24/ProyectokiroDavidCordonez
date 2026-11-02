@@ -368,7 +368,7 @@
       <h1>Registro de Entregas <span class="badge badge-naranja" id="badge-pendientes" style="font-size:0.72rem;vertical-align:middle;margin-left:0.4rem">0 pendientes</span></h1>
       <p id="periodo-distribucion-label">Cargando período…</p>
     </div>
-    <button class="btn btn-outline" type="button" data-role-required="coordinador" onclick="openModal('modal-familia')" hidden>Añadir familia</button>
+    <button class="btn btn-outline" type="button" onclick="openModal('modal-familia')">Añadir familia</button>
     <button class="btn btn-primary" onclick="abrirNuevaEntrega(null)">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
       Nueva entrega
@@ -949,8 +949,10 @@
         const tokenResult = await getIdTokenResult(user);
         const authTime = Number(tokenResult.claims.auth_time) * 1000;
         const maxExpiresAt = authTime + sessionDurationMs;
-        const storedExpiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
+        const expiryStorageKey = 'bab_auth_expires_at:' + user.uid;
+        const storedExpiresAt = Number(localStorage.getItem(expiryStorageKey));
         if (!authTime || maxExpiresAt <= Date.now() || (storedExpiresAt > 0 && storedExpiresAt <= Date.now())) {
+          localStorage.removeItem(expiryStorageKey);
           localStorage.removeItem('bab_auth_expires_at');
           await signOut(auth);
           window.location.replace('index.html');
@@ -960,7 +962,8 @@
         const expiresAt = storedExpiresAt > Date.now() && storedExpiresAt <= maxExpiresAt
           ? storedExpiresAt
           : maxExpiresAt;
-        localStorage.setItem('bab_auth_expires_at', String(expiresAt));
+        localStorage.setItem(expiryStorageKey, String(expiresAt));
+        localStorage.removeItem('bab_auth_expires_at');
         const role = tokenResult.claims.rol || tokenResult.claims.role || 'voluntario';
         window.actualizarPermisosUsuario(role);
         window.iniciarDatosFirestore(role);
@@ -1201,10 +1204,6 @@ function openModal(id) {
   }
   if (id === 'modal-recibo' && !esAdministrador()) {
     showToast('Solo una persona administradora puede generar recibos.');
-    return;
-  }
-  if (id === 'modal-familia' && !esCoordinador()) {
-    showToast('Solo una persona coordinadora puede registrar familias.');
     return;
   }
   document.getElementById(id).classList.add('open');
@@ -1792,10 +1791,6 @@ function seleccionarFamiliaParaAlmacen(id) {
 }
 
 async function guardarFamilia() {
-  if (!esCoordinador()) {
-    showToast('Solo una persona coordinadora puede registrar familias.');
-    return;
-  }
   var nombre = document.getElementById('familia-nombre').value.trim();
   var miembros = Number(document.getElementById('familia-miembros').value);
   if (!nombre) { marcarError('familia-nombre', 'Escribe el nombre de la familia'); return; }
@@ -2075,6 +2070,8 @@ function marcarLeidas() {
 // CERRAR SESIÓN
 // -------------------------------------------------------
 function cerrarSesion() {
+  var uid = sessionStorage.getItem('bab_uid');
+  if (uid) localStorage.removeItem('bab_auth_expires_at:' + uid);
   localStorage.removeItem('bab_auth_expires_at');
   sessionStorage.removeItem('bab_user');
   sessionStorage.removeItem('bab_email');

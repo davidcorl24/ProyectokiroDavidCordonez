@@ -828,8 +828,11 @@ Los roles se almacenan en `customClaims` de Firebase Auth (campo `rol: 'coordina
 
 ```
 // Lectura general: cualquier usuario autenticado
-// Escritura en /voluntarios, /familiasBeneficiarias, /umbralesEscasez,
-//              /herramientasDigitales, /periodosDistribucion: solo coordinador
+// Escritura en /voluntarios, /umbralesEscasez, /herramientasDigitales,
+//              /periodosDistribucion: solo coordinador
+// Alta en /familiasBeneficiarias: cualquier usuario autenticado
+// Cambios de entrega en /familiasBeneficiarias: autenticados, con autorización
+//              de coordinación para una segunda entrega; eliminación: coordinador
 // Escritura en /donaciones, /almacen, /movimientosAlmacen,
 //              /registrosEntrega: voluntario autenticado
 // Lectura y escritura en /recibos: solo administrador

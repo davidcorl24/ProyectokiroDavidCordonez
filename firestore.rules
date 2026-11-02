@@ -48,7 +48,8 @@ service cloud.firestore {
 
     match /familiasBeneficiarias/{familiaId} {
       allow read: if signedIn();
-      allow create, delete: if isCoordinator();
+      allow create: if signedIn();
+      allow delete: if isCoordinator();
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['entregado', 'fechaEntrega', 'segundaEntrega', 'periodoDistribucionId', 'entregasEnPeriodo'])

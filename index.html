@@ -304,6 +304,10 @@
   const config = window.FIREBASE_CONFIG;
   const sessionDurationMs = 7 * 24 * 60 * 60 * 1000;
 
+  function expiryStorageKey(uid) {
+    return 'bab_auth_expires_at:' + uid;
+  }
+
   function showError(message) {
     errorMessage.textContent = message;
     errorMessage.hidden = false;
@@ -327,8 +331,10 @@
         const tokenResult = await getIdTokenResult(user);
         const authTime = Number(tokenResult.claims.auth_time) * 1000;
         const maxExpiresAt = authTime + sessionDurationMs;
-        const storedExpiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
+        const storageKey = expiryStorageKey(user.uid);
+        const storedExpiresAt = Number(localStorage.getItem(storageKey));
         if (!authTime || maxExpiresAt <= Date.now()) {
+          localStorage.removeItem(storageKey);
           localStorage.removeItem('bab_auth_expires_at');
           await signOut(auth);
           finishingSignIn = false;
@@ -339,7 +345,8 @@
         const expiresAt = storedExpiresAt > Date.now() && storedExpiresAt <= maxExpiresAt
           ? storedExpiresAt
           : maxExpiresAt;
-        localStorage.setItem('bab_auth_expires_at', String(expiresAt));
+        localStorage.setItem(storageKey, String(expiresAt));
+        localStorage.removeItem('bab_auth_expires_at');
         sessionStorage.setItem('bab_user', user.displayName || user.email || 'Usuario');
         sessionStorage.setItem('bab_email', user.email || '');
         sessionStorage.setItem('bab_photo', user.photoURL || '');
@@ -353,7 +360,9 @@
 
     const authReady = setPersistence(auth, browserLocalPersistence).then(function() {
       onAuthStateChanged(auth, function(user) {
-        if (user) finishSignIn(user);
+        btn.querySelector('.btn-text').textContent = user
+          ? 'Cambiar o continuar con Google'
+          : 'Continuar con Google';
       });
       btn.disabled = false;
     }).catch(function(error) {
@@ -368,6 +377,7 @@
       errorMessage.hidden = true;
       btn.classList.add('loading');
       btn.disabled = true;
+      btn.querySelector('.btn-text').textContent = 'Conectando…';
 
       try {
         await authReady;
@@ -386,6 +396,11 @@
       } finally {
         btn.classList.remove('loading');
         btn.disabled = false;
+        if (auth.currentUser) {
+          btn.querySelector('.btn-text').textContent = 'Cambiar o continuar con Google';
+        } else {
+          btn.querySelector('.btn-text').textContent = 'Continuar con Google';
+        }
       }
     });
   }

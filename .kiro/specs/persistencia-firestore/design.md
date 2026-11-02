@@ -11,7 +11,7 @@ La aplicación sigue siendo HTML/JavaScript estático. Firebase Authentication i
 | `voluntarios` | Registros de voluntariado | Lectura autenticada; gestión por coordinación |
 | `donaciones` | Donaciones registradas | Lectura y alta autenticadas; cambios administrativos |
 | `almacen` | Cantidad, caducidad y estado | Lectura y movimientos autenticados; cambios de stock limitados por reglas |
-| `familiasBeneficiarias` | Estado actual de atención | Lectura autenticada; alta por coordinación; cambios de entrega controlados |
+| `familiasBeneficiarias` | Estado actual de atención | Lectura y alta autenticadas; eliminación por coordinación; cambios de entrega controlados |
 | `recibos` | Recibos fiscales | Administrador; sin borrado |
 | `contadores` | Secuencia anual de folios | Administrador, transacción |
 | `configuracion/global` | Identificador del período de distribución activo | Lectura autenticada; actualización por administrador |
@@ -24,12 +24,13 @@ La aplicación sigue siendo HTML/JavaScript estático. Firebase Authentication i
 ## Flujos
 
 1. Tras validar el usuario, el cliente obtiene el token Firebase y lee `rol` o `role`; si no existe, aplica `voluntario`.
-2. Las colecciones permitidas se suscriben mediante `onSnapshot`. Las vistas se actualizan con datos iniciales, cambios remotos y escrituras optimistas de Firestore.
-3. Las escrituras documentales usan caché persistente. Las operaciones que requieren consistencia concurrente usan transacciones y necesitan conexión.
-4. Al iniciar sesión, un administrador inicializa o avanza `configuracion/global.periodoActivoId`; las reglas validan las entregas contra ese valor.
-5. Los folios se reservan leyendo y avanzando `contadores/recibos-AÑO` dentro de una transacción; si el folio propuesto ya existe, se avanza hasta encontrar uno disponible.
-6. Las reglas de `firestore.rules` son la frontera de seguridad. Las comprobaciones de interfaz solo mejoran la experiencia y no sustituyen las reglas.
-7. En `?demo=1` no se inicializa el adaptador de datos Firestore.
+2. La pantalla de acceso permite abrir el selector de cuentas de Google aunque exista una sesión persistente; la expiración local se guarda por UID.
+3. Las colecciones permitidas se suscriben mediante `onSnapshot`. Las vistas se actualizan con datos iniciales, cambios remotos y escrituras optimistas de Firestore.
+4. Las escrituras documentales usan caché persistente. Las operaciones que requieren consistencia concurrente usan transacciones y necesitan conexión.
+5. Al iniciar sesión, un administrador inicializa o avanza `configuracion/global.periodoActivoId`; las reglas validan las entregas contra ese valor.
+6. Los folios se reservan leyendo y avanzando `contadores/recibos-AÑO` dentro de una transacción; si el folio propuesto ya existe, se avanza hasta encontrar uno disponible.
+7. Las reglas de `firestore.rules` son la frontera de seguridad. Las comprobaciones de interfaz solo mejoran la experiencia y no sustituyen las reglas.
+8. En `?demo=1` no se inicializa el adaptador de datos Firestore.
 
 ## Seguridad y despliegue
 
@@ -40,6 +41,6 @@ La aplicación sigue siendo HTML/JavaScript estático. Firebase Authentication i
 
 ## Limitaciones conocidas
 
-- La aplicación no tiene todavía UI para crear familias, usuarios, movimientos de almacén o registros históricos completos de entregas.
+- La aplicación no tiene todavía UI para crear usuarios, movimientos de almacén o registros históricos completos de entregas.
 - Los datos de muestra no se migran automáticamente y la persistencia real requiere iniciar sesión con un usuario del proyecto.
 - Las reglas cubren los documentos actuales; deberán ampliarse y probarse al conectar nuevas operaciones o colecciones.

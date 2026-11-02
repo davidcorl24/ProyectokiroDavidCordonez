@@ -18,7 +18,7 @@ Esta SPEC define la persistencia de los datos operativos del Banco de Alimentos 
 ### Requisito 1: Persistencia y sincronización
 
 1. WHEN un usuario autenticado abre la aplicación, THE Sistema SHALL cargar desde Firestore las colecciones `voluntarios`, `donaciones`, `almacen` y `familiasBeneficiarias`; solo un administrador SHALL cargar `recibos`.
-2. WHEN una operación existente crea o actualiza un voluntario, donación, artículo de almacén o estado de familia, THE Sistema SHALL guardar el cambio en la colección correspondiente y conservarlo tras recargar la página.
+2. WHEN una operación crea o actualiza un voluntario, donación, artículo de almacén o familia beneficiaria, THE Sistema SHALL guardar el cambio en la colección correspondiente y conservarlo tras recargar la página.
 3. WHEN se genera un recibo, THE Sistema SHALL persistirlo en `recibos` y actualizar en una transacción el contador anual de `contadores`.
 4. THE Sistema SHALL generar folios únicos con formato `AÑO-NNN`, incluso cuando dos administradores creen recibos concurrentemente.
 5. WHEN una escritura compatible con la caché offline se confirma localmente sin conexión, THE Sistema SHALL mantenerla pendiente y sincronizarla al recuperar conexión; un error posterior de permisos SHALL informar al usuario y revertir la vista a los datos autorizados del servidor.
@@ -37,10 +37,15 @@ Esta SPEC define la persistencia de los datos operativos del Banco de Alimentos 
 
 1. THE Sistema SHALL exigir una sesión autenticada para leer las colecciones operativas definidas en las reglas.
 2. THE Sistema SHALL restringir la lectura, creación y actualización de `recibos` y el uso de contadores de folio al administrador; SHALL NOT permitir borrar recibos.
-3. THE Sistema SHALL restringir la gestión de voluntarios, familias, herramientas y umbrales a coordinadores o administradores, conforme a las reglas de la colección.
+3. THE Sistema SHALL restringir la gestión de voluntarios, herramientas y umbrales a coordinadores o administradores; cualquier usuario autenticado SHALL poder registrar familias, mientras que solo coordinadores o administradores SHALL poder eliminarlas.
 4. THE Sistema SHALL restringir los cambios de inventario a los campos de cantidad y estado, con cantidad entera no negativa.
 5. THE Sistema SHALL denegar por defecto las colecciones que no tengan reglas explícitas.
 6. WHEN una cuenta no autorizada intenta acceder a recibos o modificar un recurso restringido, THEN Firestore SHALL denegar la operación aunque el cliente modifique la interfaz.
+
+### Requisito 4: Acceso con varias cuentas
+
+1. WHEN una persona ya tiene una cuenta de Google activa, THE Sistema SHALL permitir elegir otra cuenta desde la pantalla de acceso sin redirigirla automáticamente a la cuenta anterior.
+2. THE Sistema SHALL mantener la expiración de sesión de cada usuario separada por su identificador de Firebase Authentication.
 
 ## Métricas de éxito
 

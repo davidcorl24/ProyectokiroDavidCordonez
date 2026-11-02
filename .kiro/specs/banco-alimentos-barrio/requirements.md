@@ -101,6 +101,7 @@ Este documento describe los requisitos del **Sistema de Gestión del Banco de Al
 7. WHILE el período de distribución está activo, THE Sistema SHALL mostrar el número de familias que han recibido entrega frente al total registrado, actualizándose en un plazo máximo de 30 segundos tras cada entrega confirmada.
 8. WHEN el coordinador solicita el informe del período, THE Sistema SHALL generar un listado con todas las entregas realizadas, familias pendientes y artículos distribuidos.
 9. THE Sistema SHALL garantizar que cada familia beneficiaria aparece como máximo una vez como receptora confirmada sin intervención del coordinador en cualquier período de distribución.
+10. WHEN cualquier usuario autenticado registra una familia beneficiaria, THE Sistema SHALL permitir su alta; la autorización para registrar familias SHALL NOT requerir el rol de coordinador ni de administrador.
 
 ---
 
