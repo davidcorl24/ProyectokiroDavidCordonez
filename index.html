@@ -130,6 +130,14 @@
       opacity: 0.65;
       cursor: not-allowed;
     }
+    .login-error {
+      width: 100%;
+      margin: -1rem 0 1.25rem;
+      color: #b91c1c;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      text-align: center;
+    }
     .btn-google .spinner {
       display: none;
       width: 18px;
@@ -220,7 +228,7 @@
   <div class="divider"><span>Acceso seguro</span></div>
 
   <!-- Botón Google -->
-  <button class="btn-google" id="btnGoogle" onclick="handleGoogleLogin()">
+  <button class="btn-google" id="btnGoogle" type="button">
     <!-- Google logo SVG 4 colores -->
     <svg class="google-logo" width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
       <path d="M19.6 10.23c0-.68-.06-1.36-.17-2H10v3.78h5.4a4.61 4.61 0 0 1-2 3.02v2.5h3.24c1.9-1.75 3-4.33 3-7.3z" fill="#4285F4"/>
@@ -231,6 +239,7 @@
     <div class="spinner"></div>
     <span class="btn-text">Continuar con Google</span>
   </button>
+  <p class="login-error" id="login-error" role="alert" aria-live="polite" hidden></p>
 
   <!-- Features 2x2 -->
   <div class="features">
@@ -268,27 +277,88 @@
     </div>
   </div>
 
-  <a class="demo-link" href="app.html">¿Sin cuenta? Entrar en modo demo →</a>
+  <a class="demo-link" href="app.html?demo=1">¿Sin cuenta? Entrar en modo demo →</a>
 
   <div class="card-footer-sep"></div>
   <p class="footer">Banco de Alimentos del Barrio &middot; Coste cero</p>
 
 </div>
 
-<script>
-  // Redirigir si ya hay sesión activa
-  if (sessionStorage.getItem('bab_user')) {
-    window.location.href = 'app.html';
+<script src="firebase-config.js"></script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    browserLocalPersistence,
+    getAuth,
+    getRedirectResult,
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    setPersistence,
+    signInWithRedirect,
+    signOut
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+  const btn = document.getElementById('btnGoogle');
+  const errorMessage = document.getElementById('login-error');
+  const config = window.FIREBASE_CONFIG;
+  const sessionDurationMs = 7 * 24 * 60 * 60 * 1000;
+
+  function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.hidden = false;
   }
 
-  function handleGoogleLogin() {
-    var btn = document.getElementById('btnGoogle');
-    btn.classList.add('loading');
+  if (!config) {
     btn.disabled = true;
-    sessionStorage.setItem('bab_user', 'Admin Google');
-    setTimeout(function() {
-      window.location.href = 'app.html';
-    }, 1400);
+    showError('No se pudo cargar la configuración de acceso.');
+  } else {
+    const auth = getAuth(initializeApp(config));
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    setPersistence(auth, browserLocalPersistence).then(function() {
+      return getRedirectResult(auth);
+    }).then(function(result) {
+      if (result && result.user) {
+        localStorage.setItem('bab_auth_expires_at', String(Date.now() + sessionDurationMs));
+        sessionStorage.setItem('bab_user', result.user.displayName || result.user.email || 'Usuario');
+        sessionStorage.setItem('bab_email', result.user.email || '');
+        sessionStorage.setItem('bab_photo', result.user.photoURL || '');
+        sessionStorage.setItem('bab_uid', result.user.uid);
+      }
+
+      onAuthStateChanged(auth, function(user) {
+        if (!user) return;
+        const expiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
+        if (expiresAt > Date.now()) {
+          window.location.replace('app.html');
+        } else {
+          localStorage.removeItem('bab_auth_expires_at');
+          signOut(auth);
+        }
+      });
+    }).catch(function() {
+      showError('No se pudo preparar el acceso. Inténtalo de nuevo.');
+    });
+
+    btn.addEventListener('click', async function() {
+      errorMessage.hidden = true;
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (error) {
+        if (error.code === 'auth/unauthorized-domain') {
+          showError('Este sitio no está autorizado para iniciar sesión.');
+        } else {
+          showError('El acceso no se completó. Puedes intentarlo de nuevo.');
+        }
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    });
   }
 </script>
 </body>

@@ -1,0 +1,108 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userRole() {
+      return request.auth.token.get('rol', request.auth.token.get('role', 'voluntario'));
+    }
+
+    function isCoordinator() {
+      return signedIn() && userRole() in ['coordinador', 'administrador'];
+    }
+
+    function isAdministrator() {
+      return signedIn() && userRole() == 'administrador';
+    }
+
+    function activePeriodId() {
+      return get(/databases/$(database)/documents/configuracion/global).data.periodoActivoId;
+    }
+
+    match /voluntarios/{voluntarioId} {
+      allow read: if signedIn();
+      allow create, update: if isCoordinator();
+      allow delete: if isAdministrator();
+    }
+
+    match /donaciones/{donacionId} {
+      allow read, create: if signedIn();
+      allow update: if isCoordinator();
+      allow delete: if isAdministrator();
+    }
+
+    match /almacen/{articuloId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.cantidad is int
+        && request.resource.data.cantidad >= 0;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cantidad', 'estado'])
+        && request.resource.data.cantidad is int
+        && request.resource.data.cantidad >= 0;
+      allow delete: if isCoordinator();
+    }
+
+    match /familiasBeneficiarias/{familiaId} {
+      allow read: if signedIn();
+      allow create, delete: if isCoordinator();
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['entregado', 'fechaEntrega', 'segundaEntrega', 'periodoDistribucionId', 'entregasEnPeriodo'])
+        && request.resource.data.periodoDistribucionId == activePeriodId()
+        && (resource.data.get('periodoDistribucionId', '') != activePeriodId()
+          || resource.data.get('entregado', false) != true
+          || isCoordinator());
+    }
+
+    match /registrosEntrega/{registroId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.periodoDistribucionId == activePeriodId()
+        && (!request.resource.data.get('confirmadaPorCoordinador', false) || isCoordinator());
+      allow update: if isCoordinator();
+      allow delete: if isAdministrator();
+    }
+
+    match /movimientosAlmacen/{movimientoId} {
+      allow read, create: if signedIn();
+      allow update, delete: if false;
+    }
+
+    match /herramientasDigitales/{herramientaId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isCoordinator();
+    }
+
+    match /umbralesEscasez/{tipoAlimentoId} {
+      allow read: if signedIn();
+      allow write: if isCoordinator();
+    }
+
+    match /contadores/{contadorId} {
+      allow read, write: if isAdministrator();
+    }
+
+    match /configuracion/{configuracionId} {
+      allow read: if signedIn();
+      allow write: if isAdministrator();
+    }
+
+    match /recibos/{reciboId} {
+      allow read, create, update: if isAdministrator();
+      allow delete: if false;
+    }
+
+    match /notificaciones/{notificacionId} {
+      allow read: if isAdministrator();
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

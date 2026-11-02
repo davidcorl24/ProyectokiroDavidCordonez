@@ -20,6 +20,7 @@
       --topbar-h: 60px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
     body { font-family: 'Inter', sans-serif; background: var(--fondo); color: #1a2e1e; display: flex; flex-direction: column; min-height: 100vh; }
     .topbar { height: var(--topbar-h); background: var(--verde); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.18); flex-shrink: 0; }
     .topbar-left { display: flex; align-items: center; gap: 0.65rem; }
@@ -81,6 +82,10 @@
     .vol-card { background: #fff; border-radius: 14px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
     .vol-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--verde), var(--verde-claro)); color: #fff; font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
     .vol-name { font-size: 0.9rem; font-weight: 600; color: #1a2e1e; }
+    .vol-details { width: 100%; display: grid; gap: 0.65rem; margin-top: 0.35rem; text-align: left; }
+    .vol-detail { display: grid; gap: 0.2rem; }
+    .vol-detail-label { font-size: 0.7rem; font-weight: 700; color: #7a9a82; }
+    .vol-detail-value { font-size: 0.78rem; color: #2a4a30; line-height: 1.45; overflow-wrap: anywhere; }
     .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; }
     .badge-verde { background: #dcfce7; color: #15803d; }
     .badge-naranja { background: #fff7ed; color: #c2410c; }
@@ -232,7 +237,7 @@
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4h12M3 9h12M3 14h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     Catálogo
   </button>
-  <button class="nav-item" data-section="recibos" onclick="navTo('recibos')">
+  <button class="nav-item" data-section="recibos" onclick="navTo('recibos')" hidden>
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="2" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 6h6M6 9h6M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     Recibos Fiscales
   </button>
@@ -257,14 +262,7 @@
       Actualizar
     </button>
   </div>
-  <div class="alert alert-rojo animate-pulse">
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><circle cx="9" cy="9" r="7.5" stroke="#E05252" stroke-width="1.5"/><path d="M9 5v4M9 12.5v.5" stroke="#E05252" stroke-width="1.8" stroke-linecap="round"/></svg>
-    <span><strong>Urgente:</strong> Leche UHT (4 unid.) caduca mañana</span>
-  </div>
-  <div class="alert alert-naranja">
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><path d="M9 2L1.5 15h15L9 2z" stroke="#F4A023" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 8v3M9 13v.5" stroke="#F4A023" stroke-width="1.8" stroke-linecap="round"/></svg>
-    <span><strong>Escasez:</strong> Aceite de oliva por debajo del umbral (2 unid.)</span>
-  </div>
+  <div id="dashboard-alertas" aria-live="polite"></div>
   <div class="metrics-grid">
     <div class="metric-card metric-verde">
       <div class="metric-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="7" r="3.5" stroke="#2D7D46" stroke-width="1.6"/><path d="M4 19c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#2D7D46" stroke-width="1.6" stroke-linecap="round"/></svg></div>
@@ -366,7 +364,7 @@
   <div class="page-header">
     <div>
       <h1>Registro de Entregas <span class="badge badge-naranja" id="badge-pendientes" style="font-size:0.72rem;vertical-align:middle;margin-left:0.4rem">0 pendientes</span></h1>
-      <p>Período 26 oct – 1 nov 2026</p>
+      <p id="periodo-distribucion-label">Cargando período…</p>
     </div>
     <button class="btn btn-primary" onclick="abrirNuevaEntrega(null)">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -428,7 +426,7 @@
 </section>
 
 <!-- RECIBOS FISCALES -->
-<section class="section" id="sec-recibos">
+<section class="section" id="sec-recibos" hidden>
   <div class="page-header">
     <div>
       <h1>Recibos Fiscales
@@ -556,20 +554,20 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" for="don-donante">Nombre del donante</label>
-          <input class="form-input" type="text" id="don-donante" placeholder="Ej: Supermercado Paco" />
+          <input class="form-input" type="text" id="don-donante" maxlength="100" placeholder="Ej: Supermercado Paco" />
           <span class="form-hint">Opcional — se registrará como "Donante anónimo" si se deja vacío</span>
         </div>
         <div class="form-group">
           <label class="form-label" for="don-fecha">Fecha y hora de recepción</label>
-          <input class="form-input" type="datetime-local" id="don-fecha" />
+          <input class="form-input" type="datetime-local" id="don-fecha" required />
         </div>
         <div class="form-group">
           <label class="form-label">Artículos</label>
           <div id="articulos-container">
             <div class="articulo-row" id="art-row-1">
-              <div class="form-group" style="margin:0"><span class="form-hint">Nombre</span><input class="form-input" type="text" id="art-nombre-1" placeholder="Alimento" /></div>
-              <div class="form-group" style="margin:0"><span class="form-hint">Cant.</span><input class="form-input" type="number" min="1" max="9999" id="art-cant-1" placeholder="0" /></div>
-              <div class="form-group" style="margin:0"><span class="form-hint">Caducidad</span><input class="form-input" type="date" id="art-cad-1" onchange="checkCaducidades()" /></div>
+              <div class="form-group" style="margin:0"><label class="form-hint" for="art-nombre-1">Nombre</label><input class="form-input" type="text" id="art-nombre-1" placeholder="Alimento" required /></div>
+              <div class="form-group" style="margin:0"><label class="form-hint" for="art-cant-1">Cant.</label><input class="form-input" type="number" min="1" max="9999" id="art-cant-1" placeholder="0" required /></div>
+              <div class="form-group" style="margin:0"><label class="form-hint" for="art-cad-1">Caducidad</label><input class="form-input" type="date" id="art-cad-1" onchange="checkCaducidades()" required /></div>
             </div>
           </div>
           <div id="don-cad-warn" class="warn-box" style="display:none;margin-top:0.5rem">
@@ -664,7 +662,6 @@
       </div>
       <div id="ne-warning" class="warn-box" style="display:none">
         <div id="ne-warning-text"></div>
-        <label class="check-item" style="margin-top:0.5rem;display:flex"><input type="checkbox" id="ne-confirm-coord"> Confirmo como coordinador</label>
       </div>
       <div class="form-group">
         <label class="form-label">Artículos a entregar</label>
@@ -725,24 +722,212 @@
 
 <!-- Cargar config de Firebase -->
 <script src="firebase-config.js"></script>
-<!-- Firebase Auth: cierre de sesión real y verificación de sesión activa -->
+<!-- Firebase Auth: protección de la aplicación y cierre de sesión -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getAuth, getIdTokenResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import {
+    collection,
+    doc,
+    getFirestore,
+    initializeFirestore,
+    onSnapshot,
+    persistentLocalCache,
+    persistentMultipleTabManager,
+    runTransaction,
+    serverTimestamp,
+    setDoc,
+    writeBatch
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+  const demoMode = new URLSearchParams(window.location.search).get('demo') === '1';
   const config = window.FIREBASE_CONFIG;
-  if (config && config.apiKey && config.apiKey !== 'TU_API_KEY') {
+  if (!demoMode && (!config || !config.apiKey)) {
+    window.location.replace('index.html');
+  } else if (!demoMode) {
     const app = initializeApp(config);
     const auth = getAuth(app);
+    const sessionDurationMs = 7 * 24 * 60 * 60 * 1000;
+    let db;
 
-    // Exponer signOut para la función cerrarSesion()
+    try {
+      db = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      });
+    } catch (error) {
+      db = getFirestore(app);
+    }
+
+    window.babFirestore = {
+      subscribe: function(collectionName, onData, onError) {
+        return onSnapshot(collection(db, collectionName), function(snapshot) {
+          onData(snapshot.docs.map(function(item) {
+            const data = item.data();
+            return Object.assign({}, data, { id: data.id === undefined ? item.id : data.id });
+          }));
+        }, onError);
+      },
+      save: function(collectionName, record) {
+        return setDoc(doc(db, collectionName, String(record.id)), record);
+      },
+      ensureActivePeriod: function(periodId) {
+        const configRef = doc(db, 'configuracion', 'global');
+        return runTransaction(db, async function(transaction) {
+          const snapshot = await transaction.get(configRef);
+          if (!snapshot.exists() || snapshot.data().periodoActivoId !== periodId) {
+            transaction.set(configRef, {
+              periodoActivoId: periodId,
+              actualizadoEn: serverTimestamp()
+            }, { merge: true });
+          }
+        });
+      },
+      saveDonation: function(donation, inventoryItems) {
+        const batch = writeBatch(db);
+        batch.set(doc(db, 'donaciones', String(donation.id)), donation);
+        inventoryItems.forEach(function(item) {
+          batch.set(doc(db, 'almacen', String(item.id)), item);
+          batch.set(doc(collection(db, 'movimientosAlmacen')), {
+            articuloId: item.id,
+            tipoAlimentoNombre: item.nombre,
+            fechaHora: serverTimestamp(),
+            cantidad: item.cantidad,
+            motivo: 'donacion_recibida',
+            donacionId: donation.id
+          });
+        });
+        return batch.commit();
+      },
+      createReceipt: function(record) {
+        const year = new Date().getFullYear();
+        const counterRef = doc(db, 'contadores', 'recibos-' + year);
+        return runTransaction(db, async function(transaction) {
+          const counterSnapshot = await transaction.get(counterRef);
+          let number = counterSnapshot.exists() ? counterSnapshot.data().nextNumber : 1;
+          let folio = year + '-' + String(number).padStart(3, '0');
+          let receiptRef = doc(db, 'recibos', folio);
+          let receiptSnapshot = await transaction.get(receiptRef);
+          while (receiptSnapshot.exists()) {
+            number += 1;
+            folio = year + '-' + String(number).padStart(3, '0');
+            receiptRef = doc(db, 'recibos', folio);
+            receiptSnapshot = await transaction.get(receiptRef);
+          }
+          const receipt = Object.assign({}, record, { id: folio, folio: folio });
+          transaction.set(counterRef, {
+            year: year,
+            nextNumber: number + 1,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          transaction.set(receiptRef, receipt);
+          return receipt;
+        });
+      },
+      completeDelivery: function(options) {
+        const familyRef = doc(db, 'familiasBeneficiarias', String(options.familyId));
+        const itemRefs = options.items.map(function(item) {
+          return doc(db, 'almacen', String(item.id));
+        });
+        const deliveryRef = doc(collection(db, 'registrosEntrega'));
+        const movementRefs = options.items.map(function() {
+          return doc(collection(db, 'movimientosAlmacen'));
+        });
+        return runTransaction(db, async function(transaction) {
+          const familySnapshot = await transaction.get(familyRef);
+          if (!familySnapshot.exists()) throw new Error('Familia no encontrada');
+          const family = familySnapshot.data();
+          const deliveredInPeriod = family.periodoDistribucionId === options.periodId
+            && (family.entregasEnPeriodo > 0 || family.entregado === true);
+          if (deliveredInPeriod && !options.canAuthorizeSecond) throw new Error('Se requiere coordinador');
+          const deliveryCount = deliveredInPeriod ? (family.entregasEnPeriodo || 1) : 0;
+          const itemSnapshots = await Promise.all(itemRefs.map(function(ref) { return transaction.get(ref); }));
+          const updatedItems = itemSnapshots.map(function(snapshot, index) {
+            if (!snapshot.exists()) throw new Error('Artículo no encontrado');
+            const inventoryItem = snapshot.data();
+            const quantity = options.items[index].quantity;
+            const expiryDate = inventoryItem.caducidad ? new Date(inventoryItem.caducidad + 'T00:00:00') : null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (expiryDate && expiryDate < today) throw new Error('El artículo está caducado');
+            if (!Number.isInteger(quantity) || quantity < 1 || quantity > inventoryItem.cantidad) {
+              throw new Error('Stock insuficiente');
+            }
+            const cantidad = inventoryItem.cantidad - quantity;
+            const estado = cantidad === 0 ? 'sinstock' : inventoryItem.estado;
+            return Object.assign({}, inventoryItem, {
+              id: inventoryItem.id || String(options.items[index].id),
+              cantidad: cantidad,
+              estado: estado
+            });
+          });
+          const segundaEntrega = deliveryCount > 0;
+          const updatedFamily = Object.assign({}, family, {
+            id: family.id === undefined ? options.familyId : family.id,
+            entregado: true,
+            fechaEntrega: options.fechaEntrega,
+            segundaEntrega: segundaEntrega,
+            periodoDistribucionId: options.periodId,
+            entregasEnPeriodo: deliveryCount + 1
+          });
+          const delivery = {
+            id: deliveryRef.id,
+            familiaId: options.familyId,
+            periodoDistribucionId: options.periodId,
+            fechaHora: serverTimestamp(),
+            articulosEntregados: options.items.map(function(item) {
+              return { articuloId: String(item.id), cantidad: item.quantity };
+            }),
+            voluntarioId: options.volunteerId,
+            confirmadaPorCoordinador: segundaEntrega
+          };
+
+          updatedItems.forEach(function(item, index) {
+            transaction.update(itemRefs[index], { cantidad: item.cantidad, estado: item.estado });
+            transaction.set(movementRefs[index], {
+              articuloId: item.id,
+              tipoAlimentoNombre: item.nombre,
+              fechaHora: serverTimestamp(),
+              cantidad: options.items[index].quantity,
+              motivo: 'entrega',
+              familiaId: options.familyId
+            });
+          });
+          transaction.update(familyRef, {
+            entregado: true,
+            fechaEntrega: options.fechaEntrega,
+            segundaEntrega: segundaEntrega,
+            periodoDistribucionId: options.periodId,
+            entregasEnPeriodo: deliveryCount + 1
+          });
+          transaction.set(deliveryRef, delivery);
+          return { family: updatedFamily, items: updatedItems, delivery: delivery };
+        });
+      }
+    };
+
     window.firebaseSignOut = function() { return signOut(auth); };
 
-    // Verificar que hay sesión activa
-    onAuthStateChanged(auth, function(user) {
-      if (!user && !sessionStorage.getItem('bab_user')) {
-        // Sin sesión → redirigir al login
-        window.location.href = 'index.html';
+    onAuthStateChanged(auth, async function(user) {
+      const expiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
+      if (!user || expiresAt <= Date.now() || expiresAt > Date.now() + sessionDurationMs) {
+        localStorage.removeItem('bab_auth_expires_at');
+        if (user) signOut(auth);
+        window.location.replace('index.html');
+        return;
+      }
+
+      try {
+        const tokenResult = await getIdTokenResult(user);
+        const role = tokenResult.claims.rol || tokenResult.claims.role || 'voluntario';
+        window.actualizarPermisosUsuario(role);
+        window.iniciarDatosFirestore(role);
+        sessionStorage.setItem('bab_user', user.displayName || user.email || 'Usuario');
+        sessionStorage.setItem('bab_email', user.email || '');
+        sessionStorage.setItem('bab_photo', user.photoURL || '');
+        sessionStorage.setItem('bab_uid', user.uid);
+        window.actualizarPerfilUsuario(user.displayName || user.email || 'Usuario', user.photoURL);
+      } catch (error) {
+        window.location.replace('index.html');
       }
     });
   }
@@ -752,23 +937,25 @@
 // -------------------------------------------------------
 // STATE
 // -------------------------------------------------------
+var demoModeApp = new URLSearchParams(window.location.search).get('demo') === '1';
+if (demoModeApp) window.babRole = 'coordinador';
 var state = {
-  voluntarios: [
+  voluntarios: demoModeApp ? [
     {id:1, nombre:'María García',    nivel:'basico',     dias:['lun','mar'],       notas:''},
     {id:2, nombre:'José López',      nivel:'intermedio', dias:['mie','jue'],       notas:''},
     {id:3, nombre:'Carmen Ruiz',     nivel:'basico',     dias:['vie'],             notas:''},
     {id:4, nombre:'Ana Martínez',    nivel:'avanzado',   dias:['lun','mie','vie'], notas:''},
     {id:5, nombre:'Pedro Fernández', nivel:'intermedio', dias:['mar','jue'],       notas:''},
     {id:6, nombre:'Lucía Hernández', nivel:'basico',     dias:['sab'],             notas:''}
-  ],
-  donaciones: [
+  ] : [],
+  donaciones: demoModeApp ? [
     {id:1, donante:'Supermercado Paco',    fecha:'2026-10-28', articulos:24, voluntario:'María García',    offline:true},
     {id:2, donante:'Panadería La Espiga',  fecha:'2026-10-25', articulos:8,  voluntario:'José López',      offline:true},
     {id:3, donante:'Mercadona',            fecha:'2026-10-22', articulos:36, voluntario:'Ana Martínez',    offline:false},
     {id:4, donante:'Vecinos del Barrio',   fecha:'2026-10-20', articulos:12, voluntario:'Carmen Ruiz',     offline:true},
     {id:5, donante:'Asociación Solidaria', fecha:'2026-10-15', articulos:18, voluntario:'Pedro Fernández', offline:false}
-  ],
-  almacen: [
+  ] : [],
+  almacen: demoModeApp ? [
     {id:1, nombre:'Leche UHT',       cantidad:4,  caducidad:'2026-11-01', estado:'urgente'},
     {id:2, nombre:'Pan de molde',    cantidad:12, caducidad:'2026-11-03', estado:'proximo'},
     {id:3, nombre:'Yogur natural',   cantidad:8,  caducidad:'2026-11-05', estado:'proximo'},
@@ -776,29 +963,142 @@ var state = {
     {id:5, nombre:'Aceite de oliva', cantidad:2,  caducidad:'2027-03-20', estado:'normal'},
     {id:6, nombre:'Lentejas',        cantidad:18, caducidad:'2027-06-10', estado:'normal'},
     {id:7, nombre:'Mermelada fresa', cantidad:0,  caducidad:'',           estado:'sinstock'}
-  ],
-  familias: [
+  ] : [],
+  familias: demoModeApp ? [
     {id:1, nombre:'Familia Rodríguez', miembros:4, entregado:true,  fechaEntrega:'28 oct 10:32', segundaEntrega:false},
     {id:2, nombre:'Familia Torres',    miembros:2, entregado:true,  fechaEntrega:'29 oct 09:15', segundaEntrega:false},
     {id:3, nombre:'Familia Sánchez',   miembros:6, entregado:false, fechaEntrega:'',             segundaEntrega:false},
     {id:4, nombre:'Familia Moreno',    miembros:3, entregado:false, fechaEntrega:'',             segundaEntrega:false},
     {id:5, nombre:'Familia Jiménez',   miembros:5, entregado:true,  fechaEntrega:'27 oct',       segundaEntrega:true}
-  ],
-  recibos: [
+  ] : [],
+  entregas: [],
+  configuracion: [],
+  recibos: demoModeApp ? [
     {id:1, folio:'2026-005', donante:'Supermercado Paco',       fechaDonacion:'2026-10-28', fechaGen:'2026-10-29', estado:'vigente', descripcion:'24 artículos varios'},
     {id:2, folio:'2026-004', donante:'Panadería La Espiga',      fechaDonacion:'2026-10-21', fechaGen:'2026-10-22', estado:'vigente', descripcion:'8 panes y bollería'},
     {id:3, folio:'2026-003', donante:'Mercadona',                fechaDonacion:'2026-10-14', fechaGen:'2026-10-15', estado:'anulado', descripcion:'36 productos'},
     {id:4, folio:'2026-003-R', donante:'Mercadona (corrección)', fechaDonacion:'2026-10-14', fechaGen:'2026-10-16', estado:'vigente', descripcion:'36 productos (corrección)'}
-  ],
+  ] : [],
   nextReciboNum: 6,
   nextVolId: 7
 };
+
+window.recibirSnapshotFirestore = function(collectionName, records) {
+  var stateKey = collectionName === 'familiasBeneficiarias' ? 'familias' : collectionName;
+  if (collectionName === 'registrosEntrega') stateKey = 'entregas';
+  if (collectionName === 'configuracion') stateKey = 'configuracion';
+  state[stateKey] = records;
+  if (stateKey === 'voluntarios') renderVoluntarios();
+  if (stateKey === 'donaciones') {
+    renderDonaciones();
+    poblarSelectDonantes();
+  }
+  if (stateKey === 'almacen') renderAlmacen();
+  if (stateKey === 'familias') renderFamilias();
+  if (stateKey === 'configuracion') renderFamilias();
+  if (stateKey === 'recibos') renderRecibos();
+  renderMetricasDashboard();
+};
+
+window.iniciarDatosFirestore = function(role) {
+  if (!window.babFirestore || demoModeApp) return;
+  (window.firestoreUnsubs || []).forEach(function(unsubscribe) { unsubscribe(); });
+  window.firestoreUnsubs = [];
+  var subscribeCollections = function() {
+    var collections = ['voluntarios', 'donaciones', 'almacen', 'familiasBeneficiarias', 'registrosEntrega', 'configuracion'];
+    if (role === 'administrador') collections.push('recibos');
+    collections.forEach(function(collectionName) {
+      var unsubscribe = window.babFirestore.subscribe(collectionName, function(records) {
+        window.recibirSnapshotFirestore(collectionName, records);
+      }, function() {
+        showToast('No se pudieron cargar los datos. Comprueba los permisos de acceso.');
+      });
+      window.firestoreUnsubs.push(unsubscribe);
+    });
+  };
+
+  if (role === 'administrador') {
+    window.babFirestore.ensureActivePeriod(calcularPeriodoCalendarioId()).then(subscribeCollections).catch(function() {
+      showToast('No se pudo preparar el período activo. Contacta con una persona administradora.');
+      subscribeCollections();
+    });
+  } else {
+    subscribeCollections();
+  }
+};
+
+async function esperarGuardadoFirestore(pendingWrite) {
+  var resolveOffline;
+  var offline = new Promise(function(resolve) { resolveOffline = resolve; });
+  var handleOffline = function() { resolveOffline(false); };
+  window.addEventListener('offline', handleOffline, { once: true });
+  if (!navigator.onLine) resolveOffline(false);
+
+  try {
+    var saved = await Promise.race([pendingWrite.then(function() { return true; }), offline]);
+    if (!saved) {
+      pendingWrite.catch(function() {
+        showToast('No se pudo sincronizar el cambio. Comprueba tus permisos.');
+      });
+    }
+  } finally {
+    window.removeEventListener('offline', handleOffline);
+  }
+}
+
+async function guardarDocumentoFirestore(collectionName, record) {
+  if (demoModeApp) return;
+  if (!window.babFirestore) throw new Error('Firestore no está disponible');
+  await esperarGuardadoFirestore(window.babFirestore.save(collectionName, record));
+}
+
+function nuevoId() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+}
 
 // -------------------------------------------------------
 // HELPERS
 // -------------------------------------------------------
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function actualizarPerfilUsuario(nombre, foto) {
+  var avatar = document.getElementById('user-avatar');
+  if (!avatar) return;
+  var displayName = String(nombre || 'Usuario');
+  var partes = displayName.trim().split(/\s+/);
+  var iniciales = (partes.length > 1 ? partes[0][0] + partes[partes.length - 1][0] : displayName.substring(0, 2)).toUpperCase();
+  avatar.textContent = iniciales;
+
+  if (!foto) return;
+  var image = document.createElement('img');
+  image.src = foto;
+  image.alt = displayName;
+  image.width = 34;
+  image.height = 34;
+  image.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover';
+  image.onerror = function() { avatar.textContent = iniciales; };
+  avatar.style.cssText = 'width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--verde-claro);flex-shrink:0;border:2px solid rgba(255,255,255,0.3)';
+  avatar.replaceChildren(image);
+}
+
+function actualizarPermisosUsuario(role) {
+  var rolesValidos = ['voluntario', 'coordinador', 'administrador'];
+  window.babRole = rolesValidos.indexOf(role) !== -1 ? role : 'voluntario';
+  if (window.babRole === 'administrador') {
+    document.querySelector('[data-section="recibos"]').hidden = false;
+    document.getElementById('sec-recibos').hidden = false;
+  }
+}
+
+function esCoordinador() {
+  return window.babRole === 'coordinador' || window.babRole === 'administrador';
+}
+
+function esAdministrador() {
+  return window.babRole === 'administrador';
 }
 
 function formatFecha(iso) {
@@ -820,7 +1120,14 @@ function showSection(id) {
   var navBtn = document.querySelector('[data-section="' + id + '"]');
   if (navBtn) navBtn.classList.add('active');
 }
-function navTo(id) { showSection(id); closeSidebar(); }
+function navTo(id) {
+  if (id === 'recibos' && !esAdministrador()) {
+    showToast('Solo una persona administradora puede abrir los recibos.');
+    return;
+  }
+  showSection(id);
+  closeSidebar();
+}
 
 // -------------------------------------------------------
 // SIDEBAR MÓVIL
@@ -838,6 +1145,14 @@ function closeSidebar() {
 // MODALES
 // -------------------------------------------------------
 function openModal(id) {
+  if (id === 'modal-voluntario' && !esCoordinador()) {
+    showToast('Solo una persona coordinadora puede gestionar voluntarios.');
+    return;
+  }
+  if (id === 'modal-recibo' && !esAdministrador()) {
+    showToast('Solo una persona administradora puede generar recibos.');
+    return;
+  }
   document.getElementById(id).classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -863,7 +1178,12 @@ function showToast(msg) {
   while (c.firstChild) c.removeChild(c.firstChild);
   var t = document.createElement('div');
   t.className = 'toast-item';
-  t.innerHTML = '<span class="toast-icon">✓</span><span>' + msg + '</span>';
+  var icon = document.createElement('span');
+  icon.className = 'toast-icon';
+  icon.textContent = '✓';
+  var text = document.createElement('span');
+  text.textContent = String(msg);
+  t.append(icon, text);
   c.appendChild(t);
   setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
 }
@@ -914,15 +1234,22 @@ function renderVoluntarios() {
   var activeFiltro = document.querySelector('#filtros-voluntarios .filtro-btn.active');
   var filtro = activeFiltro ? (activeFiltro.dataset.nivel || 'todos') : 'todos';
   var lista = state.voluntarios.filter(function(v){ return filtro === 'todos' || v.nivel === filtro; });
+  var etiquetasDia = { lun: 'Lun', mar: 'Mar', mie: 'Mié', jue: 'Jue', vie: 'Vie', sab: 'Sáb', dom: 'Dom' };
   grid.innerHTML = lista.map(function(v) {
     var partes = v.nombre.split(' ');
     var iniciales = (partes[0][0] + (partes[1] ? partes[1][0] : '')).toUpperCase();
     var badgeClass = v.nivel === 'basico' ? 'badge-verde' : v.nivel === 'intermedio' ? 'badge-naranja' : 'badge-azul';
     var badgeLabel = v.nivel === 'basico' ? 'Básico' : v.nivel === 'intermedio' ? 'Intermedio' : 'Avanzado';
+    var dias = Array.isArray(v.dias) ? v.dias.map(function(dia) { return etiquetasDia[dia] || dia; }).join(', ') : '';
+    var notas = String(v.notas || '').trim();
     return '<div class="vol-card" data-nivel="' + v.nivel + '">' +
       '<div class="vol-avatar">' + iniciales + '</div>' +
       '<div class="vol-name">' + escHtml(v.nombre) + '</div>' +
-      '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span></div>';
+      '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+      '<div class="vol-details">' +
+      '<div class="vol-detail"><span class="vol-detail-label">Días disponibles</span><span class="vol-detail-value">' + escHtml(dias || 'Sin días seleccionados') + '</span></div>' +
+      '<div class="vol-detail"><span class="vol-detail-label">Notas</span><span class="vol-detail-value">' + escHtml(notas || 'Sin notas') + '</span></div>' +
+      '</div></div>';
   }).join('');
   var mv = document.getElementById('metric-voluntarios');
   if (mv) mv.textContent = state.voluntarios.length;
@@ -935,7 +1262,7 @@ function renderDonaciones() {
   var tbody = document.querySelector('#tabla-donaciones tbody');
   tbody.innerHTML = state.donaciones.map(function(d) {
     var badge = d.offline ? '<span class="badge badge-naranja">Offline</span>' : '<span class="badge badge-verde">En línea</span>';
-    return '<tr><td>' + formatFecha(d.fecha) + '</td><td>' + escHtml(d.donante) + '</td><td>' + d.articulos + ' items</td><td>' + escHtml(d.voluntario) + '</td><td>' + badge + '</td></tr>';
+    return '<tr><td>' + formatFecha(d.fecha) + '</td><td>' + escHtml(d.donante) + '</td><td>' + d.articulos + ' unidades</td><td>' + escHtml(d.voluntario) + '</td><td>' + badge + '</td></tr>';
   }).join('');
 }
 
@@ -953,12 +1280,15 @@ function renderAlmacen() {
     sinstock: '<span class="badge badge-gris">Sin stock</span>',
     caducado: '<span class="badge badge-gris">Caducado</span>'
   };
+  state.almacen.forEach(function(a) {
+    a.estado = a.cantidad <= 0 ? 'sinstock' : calcularEstado(a.caducidad);
+  });
   tbody.innerHTML = state.almacen.map(function(a) {
     var show = filtro === 'todos' || a.estado === filtro;
     var badge = badgeMap[a.estado] || '';
-    var btnEntregar = (a.estado === 'sinstock' || a.cantidad === 0)
+    var btnEntregar = (a.estado === 'sinstock' || a.estado === 'caducado' || a.cantidad === 0)
       ? '<button class="btn btn-sm btn-outline" disabled>Entregar</button>'
-      : '<button class="btn btn-sm btn-primary" onclick="abrirEntregarModal(' + a.id + ')">Entregar</button>';
+      : '<button class="btn btn-sm btn-primary" data-item-id="' + escHtml(a.id) + '" onclick="abrirEntregarModal(this.dataset.itemId)">Entregar</button>';
     return '<tr data-estado="' + a.estado + '" style="' + (show ? '' : 'display:none') + '">' +
       '<td>' + escHtml(a.nombre) + '</td><td>' + a.cantidad + '</td><td>' + (a.caducidad || '—') + '</td><td>' + badge + '</td><td>' + btnEntregar + '</td></tr>';
   }).join('');
@@ -969,7 +1299,15 @@ function renderAlmacen() {
 // -------------------------------------------------------
 function renderFamilias() {
   var tbody = document.querySelector('#tabla-familias tbody');
-  var entregadas = state.familias.filter(function(f){ return f.entregado; }).length;
+  var periodoLabel = document.getElementById('periodo-distribucion-label');
+  if (periodoLabel) {
+    var inicioPeriodo = new Date(periodoActualId() + 'T00:00:00');
+    var finPeriodo = new Date(inicioPeriodo);
+    finPeriodo.setDate(finPeriodo.getDate() + 6);
+    var formatoPeriodo = { day: 'numeric', month: 'short', year: 'numeric' };
+    periodoLabel.textContent = 'Período ' + inicioPeriodo.toLocaleDateString('es-ES', formatoPeriodo) + ' – ' + finPeriodo.toLocaleDateString('es-ES', formatoPeriodo);
+  }
+  var entregadas = state.familias.filter(familiaEntregadaEstePeriodo).length;
   var total = state.familias.length;
   var pct = total > 0 ? Math.round((entregadas / total) * 100) : 0;
 
@@ -980,18 +1318,19 @@ function renderFamilias() {
   if (pePct) pePct.textContent = pct + '%';
   if (peSub) peSub.textContent = entregadas + ' de ' + total + ' familias atendidas';
 
-  var pendientes = state.familias.filter(function(f){ return !f.entregado; }).length;
+  var pendientes = state.familias.filter(function(f){ return !familiaEntregadaEstePeriodo(f); }).length;
   var pbadge = document.getElementById('badge-pendientes');
   if (pbadge) pbadge.textContent = pendientes + ' pendientes';
 
   tbody.innerHTML = state.familias.map(function(f) {
-    var badge = f.segundaEntrega
+    var entregadaEstePeriodo = familiaEntregadaEstePeriodo(f);
+    var badge = entregadaEstePeriodo && f.segundaEntrega
       ? '<span class="badge badge-rojo">⚠ 2ª entrega</span>'
-      : f.entregado
+      : entregadaEstePeriodo
         ? '<span class="badge badge-verde">✓ Entregado</span>'
         : '<span class="badge badge-naranja">Pendiente</span>';
-    var accion = !f.entregado
-      ? '<button class="btn btn-sm btn-primary" onclick="abrirNuevaEntrega(' + f.id + ')">Registrar</button>'
+    var accion = !entregadaEstePeriodo
+      ? '<button class="btn btn-sm btn-primary" data-family-id="' + escHtml(f.id) + '" onclick="abrirNuevaEntrega(this.dataset.familyId)">Registrar</button>'
       : '—';
     return '<tr><td>' + escHtml(f.nombre) + '</td><td>' + f.miembros + '</td><td>' + badge + '</td><td>' + (f.fechaEntrega || '—') + '</td><td>' + accion + '</td></tr>';
   }).join('');
@@ -1005,7 +1344,7 @@ function renderRecibos() {
   tbody.innerHTML = state.recibos.map(function(r) {
     var estadoBadge = r.estado === 'vigente' ? '<span class="badge badge-verde">Vigente</span>' : '<span class="badge badge-gris">Anulado</span>';
     var btnPDF = r.estado === 'vigente'
-      ? '<button class="btn btn-sm btn-outline" onclick="imprimirRecibo(' + r.id + ')">📄 PDF</button>'
+      ? '<button class="btn btn-sm btn-outline" data-receipt-id="' + escHtml(r.id) + '" onclick="imprimirRecibo(this.dataset.receiptId)">📄 PDF</button>'
       : '<button class="btn btn-sm btn-outline" disabled>📄 PDF</button>';
     return '<tr><td><span class="td-mono">' + escHtml(r.folio) + '</span></td><td>' + escHtml(r.donante) + '</td><td>' + formatFecha(r.fechaDonacion) + '</td><td>' + formatFecha(r.fechaGen) + '</td><td>' + estadoBadge + '</td><td>' + btnPDF + '</td></tr>';
   }).join('');
@@ -1014,10 +1353,39 @@ function renderRecibos() {
 // -------------------------------------------------------
 // RENDER: MÉTRICAS DASHBOARD
 // -------------------------------------------------------
+function renderAlertasDashboard() {
+  var container = document.getElementById('dashboard-alertas');
+  if (!container) return;
+  container.replaceChildren();
+
+  var caducados = state.almacen.filter(function(item) {
+    return item.cantidad > 0 && calcularEstado(item.caducidad) === 'caducado';
+  });
+  var urgentes = state.almacen.filter(function(item) {
+    return item.cantidad > 0 && calcularEstado(item.caducidad) === 'urgente';
+  });
+
+  [
+    { items: caducados, className: 'alert-rojo', label: 'Caducados' },
+    { items: urgentes, className: 'alert-naranja', label: 'Caducan pronto' }
+  ].forEach(function(alerta) {
+    if (!alerta.items.length) return;
+    var row = document.createElement('div');
+    row.className = 'alert ' + alerta.className;
+    var text = document.createElement('span');
+    text.textContent = alerta.label + ': ' + alerta.items.map(function(item) {
+      return item.nombre + ' (' + item.cantidad + ' unid.)';
+    }).join(', ');
+    row.appendChild(text);
+    container.appendChild(row);
+  });
+}
+
 function renderMetricasDashboard() {
+  renderAlertasDashboard();
   var totalAlmacen = state.almacen.reduce(function(s,a){ return s + a.cantidad; }, 0);
   var proxCaducar = state.almacen.filter(function(a){ return a.estado === 'urgente' || a.estado === 'proximo'; }).length;
-  var entregadas = state.familias.filter(function(f){ return f.entregado; }).length;
+  var entregadas = state.familias.filter(familiaEntregadaEstePeriodo).length;
   var total = state.familias.length;
   var pct = total > 0 ? Math.round((entregadas / total) * 100) : 0;
 
@@ -1033,7 +1401,11 @@ function renderMetricasDashboard() {
 // -------------------------------------------------------
 // VOLUNTARIOS — guardar
 // -------------------------------------------------------
-function guardarVoluntario() {
+async function guardarVoluntario() {
+  if (!esCoordinador()) {
+    showToast('Solo una persona coordinadora puede gestionar voluntarios.');
+    return;
+  }
   var nombre = document.getElementById('vol-nombre').value.trim();
   var nivel  = document.getElementById('vol-nivel').value;
   var tel    = document.getElementById('vol-tel').value.trim();
@@ -1043,7 +1415,14 @@ function guardarVoluntario() {
   if (!tel && !email) { showToast('⚠ Añade al menos un contacto (teléfono o email)'); return; }
   var dias = [];
   document.querySelectorAll('#form-voluntario input[name="vol-dia"]:checked').forEach(function(cb){ dias.push(cb.value); });
-  state.voluntarios.push({ id: state.nextVolId++, nombre: nombre, nivel: nivel, dias: dias, notas: notas });
+  var nuevo = { id: nuevoId(), nombre: nombre, telefono: tel, email: email, nivel: nivel, dias: dias, notas: notas };
+  try {
+    await guardarDocumentoFirestore('voluntarios', nuevo);
+  } catch (error) {
+    showToast('No se pudo guardar el voluntario. Comprueba tu conexión e inténtalo de nuevo.');
+    return;
+  }
+  if (!state.voluntarios.some(function(item) { return String(item.id) === String(nuevo.id); })) state.voluntarios.push(nuevo);
   renderVoluntarios();
   renderMetricasDashboard();
   closeModal('modal-voluntario');
@@ -1068,16 +1447,16 @@ function abrirModalDonacion() {
 function addArticuloRow() {
   var container = document.getElementById('articulos-container');
   var rows = container.querySelectorAll('.articulo-row');
-  if (rows.length >= 5) { showToast('⚠ Máximo 5 artículos por donación'); return; }
+  if (rows.length >= 50) { showToast('⚠ Máximo 50 artículos por donación'); return; }
   articuloCount++;
   var n = articuloCount;
   var row = document.createElement('div');
   row.className = 'articulo-row';
   row.id = 'art-row-' + n;
   row.innerHTML =
-    '<div class="form-group" style="margin:0"><span class="form-hint">Nombre</span><input class="form-input" type="text" id="art-nombre-' + n + '" placeholder="Alimento" /></div>' +
-    '<div class="form-group" style="margin:0"><span class="form-hint">Cant.</span><input class="form-input" type="number" min="1" max="9999" id="art-cant-' + n + '" placeholder="0" /></div>' +
-    '<div class="form-group" style="margin:0"><span class="form-hint">Caducidad</span><input class="form-input" type="date" id="art-cad-' + n + '" onchange="checkCaducidades()" /></div>';
+    '<div class="form-group" style="margin:0"><label class="form-hint" for="art-nombre-' + n + '">Nombre</label><input class="form-input" type="text" id="art-nombre-' + n + '" placeholder="Alimento" required /></div>' +
+    '<div class="form-group" style="margin:0"><label class="form-hint" for="art-cant-' + n + '">Cant.</label><input class="form-input" type="number" min="1" max="9999" id="art-cant-' + n + '" placeholder="0" required /></div>' +
+    '<div class="form-group" style="margin:0"><label class="form-hint" for="art-cad-' + n + '">Caducidad</label><input class="form-input" type="date" id="art-cad-' + n + '" onchange="checkCaducidades()" required /></div>';
   container.appendChild(row);
 }
 
@@ -1093,21 +1472,71 @@ function checkCaducidades() {
   document.getElementById('don-cad-warn').style.display = hayCaducado ? 'block' : 'none';
 }
 
-function guardarDonacion() {
+async function guardarDonacion() {
   var donante  = document.getElementById('don-donante').value.trim() || 'Donante anónimo';
   var fechaDt  = document.getElementById('don-fecha').value;
-  var nombre1  = document.getElementById('art-nombre-1').value.trim();
-  if (!nombre1) { marcarError('art-nombre-1', 'Añade al menos un artículo'); return; }
+  var filas = Array.from(document.querySelectorAll('#articulos-container .articulo-row'));
+  var articulos = [];
+  for (var index = 0; index < filas.length; index += 1) {
+    var nombreInput = filas[index].querySelector('input[type="text"]');
+    var cantidadInput = filas[index].querySelector('input[type="number"]');
+    var caducidadInput = filas[index].querySelector('input[type="date"]');
+    var nombre = nombreInput.value.trim();
+    var cantidad = Number(cantidadInput.value);
+    var caducidad = caducidadInput.value;
+    if (!nombre) { marcarError(nombreInput.id, 'Escribe el nombre del artículo'); return; }
+    if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 9999) {
+      marcarError(cantidadInput.id, 'La cantidad debe estar entre 1 y 9.999');
+      return;
+    }
+    if (!caducidad) { marcarError(caducidadInput.id, 'Selecciona la fecha de caducidad'); return; }
+    articulos.push({ nombre: nombre, cantidad: cantidad, caducidad: caducidad });
+  }
+  if (!fechaDt) { marcarError('don-fecha', 'Selecciona la fecha y hora de recepción'); return; }
   // Comprobar caducados sin confirmación
   var warnBox = document.getElementById('don-cad-warn');
   if (warnBox.style.display !== 'none' && !document.getElementById('don-confirm-cad').checked) {
     showToast('⚠ Confirma los artículos caducados antes de guardar'); return;
   }
-  var totalArt = document.querySelectorAll('#articulos-container .articulo-row').length;
-  var fecha = fechaDt ? fechaDt.split('T')[0] : new Date().toISOString().split('T')[0];
-  var nueva = { id: state.donaciones.length + 1, donante: donante, fecha: fecha, articulos: totalArt, voluntario: sessionStorage.getItem('bab_user') || 'Admin Demo', offline: false };
-  state.donaciones.unshift(nueva);
+  var nueva = {
+    id: nuevoId(),
+    donante: donante,
+    fecha: fechaDt.split('T')[0],
+    fechaHoraRecepcion: new Date(fechaDt).toISOString(),
+    articulos: articulos.reduce(function(total, articulo) { return total + articulo.cantidad; }, 0),
+    detalleArticulos: articulos,
+    voluntario: sessionStorage.getItem('bab_user') || 'Modo demo',
+    voluntarioUid: sessionStorage.getItem('bab_uid') || 'demo',
+    registradaEnUTC: new Date().toISOString(),
+    offline: !navigator.onLine
+  };
+  var nuevosLotes = articulos.map(function(articulo) {
+    return {
+      id: nuevoId(),
+      loteId: nueva.id,
+      nombre: articulo.nombre,
+      cantidad: articulo.cantidad,
+      caducidad: articulo.caducidad,
+      estado: calcularEstado(articulo.caducidad)
+    };
+  });
+  try {
+    if (!demoModeApp) {
+      await esperarGuardadoFirestore(window.babFirestore.saveDonation(nueva, nuevosLotes));
+    }
+  } catch (error) {
+    showToast('No se pudo guardar la donación. Comprueba tu conexión e inténtalo de nuevo.');
+    return;
+  }
+  if (!state.donaciones.some(function(item) { return String(item.id) === String(nueva.id); })) state.donaciones.unshift(nueva);
+  nuevosLotes.forEach(function(lote) {
+    if (!state.almacen.some(function(item) { return String(item.id) === String(lote.id); })) state.almacen.push(lote);
+  });
+  state.almacen.sort(function(a,b){ return (a.caducidad || '9999') > (b.caducidad || '9999') ? 1 : -1; });
   renderDonaciones();
+  renderAlmacen();
+  renderMetricasDashboard();
+  poblarSelectDonantes();
   closeModal('modal-donacion');
   document.getElementById('form-donacion').reset();
   // Reset artículos extra
@@ -1133,7 +1562,7 @@ function calcularEstado(fechaCad) {
   return 'normal';
 }
 
-function guardarEntradaAlmacen() {
+async function guardarEntradaAlmacen() {
   var nombre = document.getElementById('alm-nombre').value.trim();
   var cant   = parseInt(document.getElementById('alm-cantidad').value, 10);
   var cad    = document.getElementById('alm-caducidad').value;
@@ -1141,8 +1570,14 @@ function guardarEntradaAlmacen() {
   if (!cant || cant < 1) { marcarError('alm-cantidad', 'Cantidad mínima 1'); return; }
   if (!cad) { marcarError('alm-caducidad', 'Selecciona la fecha de caducidad'); return; }
   var estado = calcularEstado(cad);
-  var nuevo = { id: Date.now(), nombre: nombre, cantidad: cant, caducidad: cad, estado: estado };
-  state.almacen.push(nuevo);
+  var nuevo = { id: nuevoId(), nombre: nombre, cantidad: cant, caducidad: cad, estado: estado };
+  try {
+    await guardarDocumentoFirestore('almacen', nuevo);
+  } catch (error) {
+    showToast('No se pudo guardar la entrada. Comprueba tu conexión e inténtalo de nuevo.');
+    return;
+  }
+  if (!state.almacen.some(function(item) { return String(item.id) === String(nuevo.id); })) state.almacen.push(nuevo);
   state.almacen.sort(function(a,b){ return (a.caducidad || '9999') > (b.caducidad || '9999') ? 1 : -1; });
   renderAlmacen();
   renderMetricasDashboard();
@@ -1156,9 +1591,98 @@ function guardarEntradaAlmacen() {
 // -------------------------------------------------------
 var currentAlmacenId = null;
 
+function calcularPeriodoCalendarioId() {
+  var fecha = new Date();
+  var diaDesdeLunes = (fecha.getDay() + 6) % 7;
+  fecha.setDate(fecha.getDate() - diaDesdeLunes);
+  return [fecha.getFullYear(), String(fecha.getMonth() + 1).padStart(2, '0'), String(fecha.getDate()).padStart(2, '0')].join('-');
+}
+
+function periodoActualId() {
+  var configuracion = state.configuracion.find(function(item) { return item.id === 'global'; });
+  return configuracion && configuracion.periodoActivoId
+    ? configuracion.periodoActivoId
+    : calcularPeriodoCalendarioId();
+}
+
+function familiaEntregadaEstePeriodo(familia) {
+  if (familia.periodoDistribucionId) {
+    return familia.periodoDistribucionId === periodoActualId()
+      && (familia.entregasEnPeriodo > 0 || familia.entregado === true);
+  }
+  return demoModeApp && familia.entregado === true;
+}
+
+async function guardarEntregaCompleta(familia, articulos) {
+  var ahora = new Date();
+  var meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var fechaEntrega = ahora.getDate() + ' ' + meses[ahora.getMonth()] + ' ' + pad(ahora.getHours()) + ':' + pad(ahora.getMinutes());
+  var periodId = periodoActualId();
+  var deliveredAlready = familiaEntregadaEstePeriodo(familia);
+  var deliveryCount = deliveredAlready ? (familia.entregasEnPeriodo || 1) : 0;
+  var resultado;
+
+  if (demoModeApp) {
+    if (deliveredAlready && !esCoordinador()) throw new Error('Se requiere coordinador');
+    var actualizados = articulos.map(function(entrega) {
+      var articulo = state.almacen.find(function(item) { return String(item.id) === String(entrega.id); });
+      if (!articulo || calcularEstado(articulo.caducidad) === 'caducado' || !Number.isInteger(entrega.quantity) || entrega.quantity < 1 || entrega.quantity > articulo.cantidad) {
+        throw new Error('Stock insuficiente');
+      }
+      var actualizado = Object.assign({}, articulo, { cantidad: articulo.cantidad - entrega.quantity });
+      if (actualizado.cantidad === 0) actualizado.estado = 'sinstock';
+      return actualizado;
+    });
+    resultado = {
+      family: Object.assign({}, familia, {
+        entregado: true,
+        fechaEntrega: fechaEntrega,
+        segundaEntrega: deliveredAlready,
+        periodoDistribucionId: periodId,
+        entregasEnPeriodo: deliveryCount + 1
+      }),
+      items: actualizados,
+      delivery: {
+        id: nuevoId(),
+        familiaId: familia.id,
+        periodoDistribucionId: periodId,
+        fechaHora: ahora.toISOString(),
+        articulosEntregados: articulos.map(function(item) {
+          return { articuloId: String(item.id), cantidad: item.quantity };
+        }),
+        voluntarioId: sessionStorage.getItem('bab_uid') || 'demo',
+        confirmadaPorCoordinador: deliveredAlready
+      }
+    };
+  } else {
+    resultado = await window.babFirestore.completeDelivery({
+      familyId: familia.id,
+      items: articulos,
+      fechaEntrega: fechaEntrega,
+      periodId: periodId,
+      volunteerId: sessionStorage.getItem('bab_uid'),
+      canAuthorizeSecond: esCoordinador()
+    });
+  }
+
+  state.almacen = state.almacen.map(function(item) {
+    var updatedItem = resultado.items.find(function(updated) { return String(updated.id) === String(item.id); });
+    return updatedItem || item;
+  });
+  state.familias = state.familias.map(function(item) {
+    return String(item.id) === String(resultado.family.id) ? resultado.family : item;
+  });
+  if (!state.entregas.some(function(item) { return item.id === resultado.delivery.id; })) state.entregas.unshift(resultado.delivery);
+  renderAlmacen();
+  renderFamilias();
+  renderMetricasDashboard();
+  return resultado;
+}
+
 function abrirEntregarModal(id) {
   currentAlmacenId = id;
-  var item = state.almacen.find(function(a){ return a.id === id; });
+  var item = state.almacen.find(function(a){ return String(a.id) === String(id); });
   if (!item) return;
   document.getElementById('entregar-titulo').textContent = 'Entregar: ' + item.nombre;
   var cantInput = document.getElementById('entregar-cantidad');
@@ -1170,22 +1694,29 @@ function abrirEntregarModal(id) {
   state.familias.forEach(function(f){
     sel.innerHTML += '<option value="' + f.id + '">' + escHtml(f.nombre) + '</option>';
   });
-  sel.innerHTML += '<option value="otra">Otra familia…</option>';
   openModal('modal-entregar');
 }
 
-function guardarEntrega() {
+async function guardarEntrega() {
   var famVal = document.getElementById('entregar-familia').value;
   var cant   = parseInt(document.getElementById('entregar-cantidad').value, 10);
-  var item   = state.almacen.find(function(a){ return a.id === currentAlmacenId; });
+  var item   = state.almacen.find(function(a){ return String(a.id) === String(currentAlmacenId); });
   if (!item) return;
   if (!famVal) { showToast('⚠ Selecciona una familia'); return; }
   if (!cant || cant < 1) { showToast('⚠ Cantidad debe ser al menos 1'); return; }
   if (cant > item.cantidad) { showToast('⚠ No hay suficiente stock (disponible: ' + item.cantidad + ')'); return; }
-  item.cantidad -= cant;
-  if (item.cantidad === 0) item.estado = 'sinstock';
-  renderAlmacen();
-  renderMetricasDashboard();
+  var familia = state.familias.find(function(current) { return String(current.id) === String(famVal); });
+  if (!familia) { showToast('⚠ Selecciona una familia registrada'); return; }
+  if (familiaEntregadaEstePeriodo(familia) && !esCoordinador()) {
+    showToast('Solo una persona coordinadora puede autorizar una segunda entrega.');
+    return;
+  }
+  try {
+    await guardarEntregaCompleta(familia, [{ id: item.id, quantity: cant }]);
+  } catch (error) {
+    showToast('No se pudo registrar la entrega. Comprueba el stock, tus permisos y conexión.');
+    return;
+  }
   closeModal('modal-entregar');
   showToast('Entrega registrada: ' + cant + ' × ' + item.nombre);
 }
@@ -1200,19 +1731,19 @@ function abrirNuevaEntrega(familiaId) {
   var ne_buscar = document.getElementById('ne-buscar');
   ne_buscar.value = '';
   if (familiaId) {
-    var f = state.familias.find(function(x){ return x.id === familiaId; });
+    var f = state.familias.find(function(x){ return String(x.id) === String(familiaId); });
     if (f) ne_buscar.value = f.nombre;
   }
   document.getElementById('ne-resultado').innerHTML = '';
   document.getElementById('ne-resultado').style.display = 'none';
   document.getElementById('ne-warning').style.display = 'none';
   document.getElementById('ne-warning-text').textContent = '';
-  document.getElementById('ne-confirm-coord').checked = false;
   document.getElementById('ne-familia-id').value = familiaId || '';
 
   // Artículos disponibles
   var artDiv = document.getElementById('ne-articulos');
-  var disponibles = state.almacen.filter(function(a){ return a.cantidad > 0 && a.estado !== 'sinstock'; });
+  var disponibles = state.almacen.filter(function(a){ return a.cantidad > 0 && a.estado !== 'sinstock' && a.estado !== 'caducado'; });
+  disponibles.sort(function(a, b) { return String(a.caducidad || '9999').localeCompare(String(b.caducidad || '9999')); });
   if (disponibles.length === 0) {
     artDiv.innerHTML = '<span class="form-hint">No hay artículos disponibles en el almacén</span>';
   } else {
@@ -1223,8 +1754,8 @@ function abrirNuevaEntrega(familiaId) {
 
   // Si ya viene con familia pre-seleccionada, mostrar warning si aplica
   if (familiaId) {
-    var fam = state.familias.find(function(x){ return x.id === familiaId; });
-    if (fam && fam.entregado) {
+    var fam = state.familias.find(function(x){ return String(x.id) === String(familiaId); });
+    if (fam && familiaEntregadaEstePeriodo(fam)) {
       var warn = document.getElementById('ne-warning');
       warn.style.display = 'block';
       document.getElementById('ne-warning-text').innerHTML = '⚠ <strong>' + escHtml(fam.nombre) + '</strong> ya recibió entrega este período. Se requiere confirmación del coordinador.';
@@ -1244,13 +1775,13 @@ function buscarFamiliaLive() {
     return;
   }
   res.innerHTML = matches.map(function(f){
-    return '<div class="search-result-item" onclick="seleccionarFamiliaEntrega(' + f.id + ')">' + escHtml(f.nombre) + ' (' + f.miembros + ' miembros)</div>';
+    return '<div class="search-result-item" data-family-id="' + escHtml(f.id) + '" onclick="seleccionarFamiliaEntrega(this.dataset.familyId)">' + escHtml(f.nombre) + ' (' + f.miembros + ' miembros)</div>';
   }).join('');
   res.style.display = 'block';
 }
 
 function seleccionarFamiliaEntrega(id) {
-  var f = state.familias.find(function(x){ return x.id === id; });
+  var f = state.familias.find(function(x){ return String(x.id) === String(id); });
   if (!f) return;
   currentFamiliaId = id;
   document.getElementById('ne-familia-id').value = id;
@@ -1259,7 +1790,7 @@ function seleccionarFamiliaEntrega(id) {
   res.innerHTML = '';
   res.style.display = 'none';
   var warn = document.getElementById('ne-warning');
-  if (f.entregado) {
+  if (familiaEntregadaEstePeriodo(f)) {
     warn.style.display = 'block';
     document.getElementById('ne-warning-text').innerHTML = '⚠ <strong>' + escHtml(f.nombre) + '</strong> ya recibió entrega este período. Se requiere confirmación del coordinador.';
   } else {
@@ -1268,23 +1799,24 @@ function seleccionarFamiliaEntrega(id) {
   }
 }
 
-function guardarNuevaEntrega() {
-  var familiaId = parseInt(document.getElementById('ne-familia-id').value, 10);
+async function guardarNuevaEntrega() {
+  var familiaId = document.getElementById('ne-familia-id').value;
   if (!familiaId) { showToast('⚠ Selecciona una familia'); return; }
-  var familia = state.familias.find(function(f){ return f.id === familiaId; });
+  var familia = state.familias.find(function(f){ return String(f.id) === String(familiaId); });
   if (!familia) { showToast('⚠ Familia no encontrada'); return; }
-  if (familia.entregado && !document.getElementById('ne-confirm-coord').checked) {
-    showToast('⚠ Requiere confirmación del coordinador'); return;
+  if (familiaEntregadaEstePeriodo(familia) && !esCoordinador()) {
+    showToast('Solo una persona coordinadora puede autorizar una segunda entrega.'); return;
   }
-  var ahora = new Date();
-  var meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  var pad = function(n){ return String(n).padStart(2,'0'); };
-  var horaStr = ahora.getDate() + ' ' + meses[ahora.getMonth()] + ' ' + pad(ahora.getHours()) + ':' + pad(ahora.getMinutes());
-  familia.entregado = true;
-  familia.fechaEntrega = horaStr;
-  if (familia.segundaEntrega) familia.segundaEntrega = false; // resolvemos el flag al confirmar
-  renderFamilias();
-  renderMetricasDashboard();
+  var seleccionados = Array.from(document.querySelectorAll('#ne-articulos input[name="ne-art"]:checked')).map(function(input) {
+    return { id: input.value, quantity: 1 };
+  });
+  if (seleccionados.length === 0) { showToast('Selecciona al menos un artículo para la entrega.'); return; }
+  try {
+    await guardarEntregaCompleta(familia, seleccionados);
+  } catch (error) {
+    showToast('No se pudo guardar la entrega. Comprueba los artículos, stock, permisos y conexión.');
+    return;
+  }
   closeModal('modal-nueva-entrega');
   showToast('Entrega registrada para ' + familia.nombre);
 }
@@ -1314,7 +1846,11 @@ function poblarSelectDonantes() {
   if (current) sel.value = current;
 }
 
-function guardarRecibo() {
+async function guardarRecibo() {
+  if (!esAdministrador()) {
+    showToast('Solo una persona administradora puede generar recibos.');
+    return;
+  }
   var sel = document.getElementById('rec-donante-sel');
   var donante = sel.value === 'otro'
     ? document.getElementById('rec-donante-otro').value.trim()
@@ -1326,11 +1862,19 @@ function guardarRecibo() {
   if (!donante) { showToast('⚠ Selecciona o escribe el donante'); return; }
   if (!fecha) { marcarError('rec-fecha', 'Selecciona la fecha de la donación'); return; }
   var anio = new Date().getFullYear();
-  var num  = String(state.nextReciboNum).padStart(3, '0');
-  var folio = anio + '-' + num;
-  state.nextReciboNum++;
-  var nuevo = { id: state.recibos.length + 1, folio: folio, donante: donante, fechaDonacion: fecha, fechaGen: new Date().toISOString().split('T')[0], estado: 'vigente', descripcion: desc || '—', banco: banco, direccion: dir };
-  state.recibos.unshift(nuevo);
+  var nuevo = { id: nuevoId(), donante: donante, fechaDonacion: fecha, fechaGen: new Date().toISOString().split('T')[0], estado: 'vigente', descripcion: desc || '—', banco: banco, direccion: dir };
+  try {
+    if (!demoModeApp) nuevo = await window.babFirestore.createReceipt(nuevo);
+    else {
+      var num = String(state.nextReciboNum++).padStart(3, '0');
+      nuevo.folio = anio + '-' + num;
+    }
+  } catch (error) {
+    showToast('No se pudo guardar el recibo. Comprueba tu conexión y tus permisos.');
+    return;
+  }
+  var folio = nuevo.folio;
+  if (!state.recibos.some(function(item) { return String(item.id) === String(nuevo.id); })) state.recibos.unshift(nuevo);
   renderRecibos();
   closeModal('modal-recibo');
   document.getElementById('form-recibo').reset();
@@ -1341,7 +1885,11 @@ function guardarRecibo() {
 }
 
 function imprimirRecibo(id) {
-  var r = state.recibos.find(function(x){ return x.id === id; });
+  if (!esAdministrador()) {
+    showToast('Solo una persona administradora puede descargar recibos.');
+    return;
+  }
+  var r = state.recibos.find(function(x){ return String(x.id) === String(id); });
   if (!r || r.estado === 'anulado') return;
   var banco = r.banco || 'Banco de Alimentos del Barrio';
   var dir   = r.direccion || 'Barrio Centro, s/n';
@@ -1380,6 +1928,7 @@ function marcarLeidas() {
 // CERRAR SESIÓN
 // -------------------------------------------------------
 function cerrarSesion() {
+  localStorage.removeItem('bab_auth_expires_at');
   sessionStorage.removeItem('bab_user');
   sessionStorage.removeItem('bab_email');
   sessionStorage.removeItem('bab_photo');
@@ -1401,27 +1950,16 @@ function cerrarSesion() {
 // INIT
 // -------------------------------------------------------
 window.addEventListener('DOMContentLoaded', function() {
-  if (!sessionStorage.getItem('bab_user')) sessionStorage.setItem('bab_user', 'Admin Demo');
-
   // Fecha dashboard
   var opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
   var el = document.getElementById('fecha-dashboard');
   if (el) el.textContent = 'Actualizado ahora · ' + new Date().toLocaleDateString('es-ES', opts);
 
   // Avatar — foto real de Google o iniciales
-  var userName = sessionStorage.getItem('bab_user') || 'Admin Demo';
+  var demoMode = new URLSearchParams(window.location.search).get('demo') === '1';
+  var userName = demoMode ? 'Modo demo' : (sessionStorage.getItem('bab_user') || 'Usuario');
   var userPhoto = sessionStorage.getItem('bab_photo') || '';
-  var avatarEl = document.getElementById('user-avatar');
-  if (avatarEl) {
-    if (userPhoto) {
-      avatarEl.style.cssText = 'width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--verde-claro);flex-shrink:0;border:2px solid rgba(255,255,255,0.3)';
-      avatarEl.innerHTML = '<img src="' + userPhoto + '" width="34" height="34" style="display:block;width:100%;height:100%;object-fit:cover" alt="' + userName.replace(/"/g, '') + '" onerror="this.parentNode.textContent=\'' + userName.substring(0, 2).toUpperCase() + '\'">';
-    } else {
-      var parts = userName.split(' ');
-      var initials = parts.length >= 2 ? parts[0][0] + parts[parts.length - 1][0] : userName.substring(0, 2);
-      avatarEl.textContent = initials.toUpperCase();
-    }
-  }
+  actualizarPerfilUsuario(userName, userPhoto);
 
   // Poblar select donantes recibos
   poblarSelectDonantes();
