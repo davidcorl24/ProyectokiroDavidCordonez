@@ -636,7 +636,7 @@
         <input type="hidden" id="entregar-familia-id" value="" />
         <div class="search-results" id="entregar-familia-resultados" style="display:none" role="listbox" aria-label="Familias encontradas"></div>
         <p class="form-hint" id="entregar-familias-vacio" hidden>No hay familias registradas todavía.</p>
-        <button type="button" class="btn btn-outline btn-sm" id="entregar-agregar-familia" data-role-required="coordinador" onclick="openModal('modal-familia')" hidden>Añadir familia</button>
+        <button type="button" class="btn btn-outline btn-sm" id="entregar-agregar-familia" onclick="openModal('modal-familia')">Añadir familia</button>
       </div>
       <div class="form-group">
         <label class="form-label" for="entregar-cantidad">Cantidad a entregar</label>
@@ -1739,13 +1739,11 @@ function poblarSelectFamiliasEntrega(selectedId) {
   var idInput = document.getElementById('entregar-familia-id');
   var results = document.getElementById('entregar-familia-resultados');
   var vacio = document.getElementById('entregar-familias-vacio');
-  var addButton = document.getElementById('entregar-agregar-familia');
   input.value = '';
   idInput.value = '';
   results.replaceChildren();
   results.style.display = 'none';
   vacio.hidden = state.familias.length > 0;
-  addButton.hidden = !esCoordinador();
   if (selectedId !== undefined) seleccionarFamiliaParaAlmacen(selectedId);
 }
 
