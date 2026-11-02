@@ -292,11 +292,10 @@
     browserLocalPersistence,
     getAuth,
     getIdTokenResult,
-    getRedirectResult,
     GoogleAuthProvider,
     onAuthStateChanged,
     setPersistence,
-    signInWithRedirect,
+    signInWithPopup,
     signOut
   } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
@@ -317,21 +316,24 @@
     const auth = getAuth(initializeApp(config));
     const provider = new GoogleAuthProvider();
     let finishingSignIn = false;
+    btn.disabled = true;
     provider.setCustomParameters({ prompt: 'select_account' });
 
-    function finishSignIn(user) {
+    async function finishSignIn(user) {
       if (!user || finishingSignIn) return;
       finishingSignIn = true;
 
-      getIdTokenResult(user).then(function(tokenResult) {
+      try {
+        const tokenResult = await getIdTokenResult(user);
         const authTime = Number(tokenResult.claims.auth_time) * 1000;
         const maxExpiresAt = authTime + sessionDurationMs;
         const storedExpiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
         if (!authTime || maxExpiresAt <= Date.now()) {
           localStorage.removeItem('bab_auth_expires_at');
-          return signOut(auth).then(function() {
-            showError('La sesión venció. Vuelve a iniciar sesión con Google.');
-          });
+          await signOut(auth);
+          finishingSignIn = false;
+          showError('La sesión venció. Vuelve a iniciar sesión con Google.');
+          return;
         }
 
         const expiresAt = storedExpiresAt > Date.now() && storedExpiresAt <= maxExpiresAt
@@ -343,22 +345,22 @@
         sessionStorage.setItem('bab_photo', user.photoURL || '');
         sessionStorage.setItem('bab_uid', user.uid);
         window.location.replace('app.html');
-      }).catch(function() {
+      } catch (error) {
         finishingSignIn = false;
         showError('No se pudo validar la sesión de Google. Inténtalo de nuevo.');
-      });
+      }
     }
 
-    setPersistence(auth, browserLocalPersistence).then(function() {
-      onAuthStateChanged(auth, finishSignIn);
-      return getRedirectResult(auth);
-    }).then(function(result) {
-      if (result && result.user) finishSignIn(result.user);
+    const authReady = setPersistence(auth, browserLocalPersistence).then(function() {
+      onAuthStateChanged(auth, function(user) {
+        if (user) finishSignIn(user);
+      });
+      btn.disabled = false;
     }).catch(function(error) {
       if (error.code === 'auth/unauthorized-domain') {
         showError('Firebase no autoriza el dominio "' + window.location.hostname + '". Añádelo en Firebase Console > Authentication > Settings > Authorized domains, sin http, ruta ni puerto.');
       } else {
-        showError('No se pudo completar el acceso con Google. Inténtalo de nuevo.');
+        showError('No se pudo preparar el acceso. Inténtalo de nuevo.');
       }
     });
 
@@ -368,10 +370,16 @@
       btn.disabled = true;
 
       try {
-        await signInWithRedirect(auth, provider);
+        await authReady;
+        const result = await signInWithPopup(auth, provider);
+        await finishSignIn(result.user);
       } catch (error) {
         if (error.code === 'auth/unauthorized-domain') {
           showError('Firebase no autoriza el dominio "' + window.location.hostname + '". Añádelo en Firebase Console > Authentication > Settings > Authorized domains, sin http, ruta ni puerto.');
+        } else if (error.code === 'auth/popup-blocked') {
+          showError('El navegador bloqueó la ventana de Google. Permite ventanas emergentes e inténtalo otra vez.');
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          showError('Se cerró la ventana de Google antes de terminar el acceso. Inténtalo otra vez.');
         } else {
           showError('El acceso no se completó. Puedes intentarlo de nuevo.');
         }
