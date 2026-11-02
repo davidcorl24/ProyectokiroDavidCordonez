@@ -1013,6 +1013,7 @@
 // -------------------------------------------------------
 var demoModeApp = new URLSearchParams(window.location.search).get('demo') === '1';
 if (demoModeApp) window.babRole = 'coordinador';
+var configuracionFirestoreLista = demoModeApp;
 var state = {
   voluntarios: demoModeApp ? [
     {id:1, nombre:'María García',    nivel:'basico',     dias:['lun','mar'],       notas:''},
@@ -1062,6 +1063,7 @@ window.recibirSnapshotFirestore = function(collectionName, records) {
   if (collectionName === 'registrosEntrega') stateKey = 'entregas';
   if (collectionName === 'configuracion') stateKey = 'configuracion';
   state[stateKey] = records;
+  if (stateKey === 'configuracion') configuracionFirestoreLista = true;
   if (stateKey === 'voluntarios') renderVoluntarios();
   if (stateKey === 'donaciones') {
     renderDonaciones();
@@ -1740,6 +1742,18 @@ function periodoActualId() {
     : calcularPeriodoCalendarioId();
 }
 
+function periodoParaEntrega() {
+  if (demoModeApp) return periodoActualId();
+  if (!configuracionFirestoreLista) {
+    throw new Error('Espera a que se cargue el período activo antes de registrar la entrega.');
+  }
+  var configuracion = state.configuracion.find(function(item) { return item.id === 'global'; });
+  if (!configuracion || !configuracion.periodoActivoId) {
+    throw new Error('El período activo no está configurado. Pide a una persona administradora que abra la aplicación.');
+  }
+  return configuracion.periodoActivoId;
+}
+
 function familiaEntregadaEstePeriodo(familia) {
   if (familia.periodoDistribucionId) {
     return familia.periodoDistribucionId === periodoActualId()
@@ -1751,7 +1765,7 @@ function familiaEntregadaEstePeriodo(familia) {
 function informarErrorEntrega(error) {
   console.error('No se pudo registrar la entrega:', error);
   if (error && error.code === 'permission-denied') {
-    showToast('Firestore rechazó la entrega. Comprueba los permisos y el período activo.');
+    showToast('Firestore rechazó la entrega. Comprueba que las reglas estén desplegadas y que tu perfil y el período activo estén autorizados.');
   } else if (error && ['unavailable', 'network-request-failed'].indexOf(error.code) !== -1) {
     showToast('No hay conexión con Firestore. La entrega no se registró; revisa tu conexión e inténtalo de nuevo.');
   } else if (error && error.message) {
@@ -1762,11 +1776,11 @@ function informarErrorEntrega(error) {
 }
 
 async function guardarEntregaCompleta(familia, articulos) {
+  var periodId = periodoParaEntrega();
   var ahora = new Date();
   var meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   var pad = function(n){ return String(n).padStart(2,'0'); };
   var fechaEntrega = ahora.getDate() + ' ' + meses[ahora.getMonth()] + ' ' + pad(ahora.getHours()) + ':' + pad(ahora.getMinutes());
-  var periodId = periodoActualId();
   var deliveredAlready = familiaEntregadaEstePeriodo(familia);
   var deliveryCount = deliveredAlready ? (familia.entregasEnPeriodo || 1) : 0;
   var resultado;

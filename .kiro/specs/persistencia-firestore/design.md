@@ -27,7 +27,7 @@ La aplicación sigue siendo HTML/JavaScript estático. Firebase Authentication i
 2. La pantalla de acceso permite abrir el selector de cuentas de Google aunque exista una sesión persistente; la expiración local se guarda por UID.
 3. Las colecciones permitidas se suscriben mediante `onSnapshot`. Las vistas se actualizan con datos iniciales, cambios remotos y escrituras optimistas de Firestore.
 4. Las escrituras documentales usan caché persistente. Las operaciones que requieren consistencia concurrente usan transacciones y necesitan conexión.
-5. Al iniciar sesión, un administrador inicializa o avanza `configuracion/global.periodoActivoId`; las reglas validan las entregas contra ese valor.
+5. Al iniciar sesión, un administrador inicializa o avanza `configuracion/global.periodoActivoId`; el cliente espera la instantánea de configuración y usa ese valor exacto al registrar entregas, que las reglas validan.
 6. Cada `registrosEntrega` conserva el nombre de la familia, la fecha y el nombre y cantidad de cada artículo; la aplicación imprime un comprobante de entrega distinto del recibo fiscal de donación.
 7. Los folios fiscales de donación se reservan leyendo y avanzando `contadores/recibos-AÑO` dentro de una transacción; si el folio propuesto ya existe, se avanza hasta encontrar uno disponible.
 8. Las reglas de `firestore.rules` son la frontera de seguridad. Las comprobaciones de interfaz solo mejoran la experiencia y no sustituyen las reglas.

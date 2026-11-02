@@ -30,7 +30,7 @@ Esta SPEC define la persistencia de los datos operativos del Banco de Alimentos 
 1. WHEN se descuenta stock, THE Sistema SHALL actualizar cantidad y estado en una transacción, rechazar cantidades superiores al stock disponible y evitar cantidades negativas.
 2. WHEN una familia ya tiene una entrega en el período, THE Sistema SHALL permitir una segunda actualización únicamente a un coordinador o administrador autenticado; el permiso SHALL comprobarse también en las reglas de Firestore.
 3. THE Sistema SHALL mantener el identificador del período activo en `configuracion/global`; al iniciar sesión, un administrador SHALL inicializarlo o avanzarlo a la semana actual.
-4. WHEN se registra una entrega, THE Sistema SHALL guardar el identificador del período activo en la familia y en el registro de entrega; las reglas SHALL rechazar entregas para períodos distintos.
+4. WHEN se registra una entrega, THE Sistema SHALL esperar a cargar `configuracion/global` y guardar el identificador de su período activo en la familia y en el registro; las reglas SHALL rechazar entregas para períodos distintos y el cliente SHALL NOT sustituir un período aún no cargado por la fecha local.
 5. IF una transacción de stock o entrega no puede completarse, THEN THE Sistema SHALL conservar el estado confirmado previamente y mostrar un mensaje de error.
 
 ### Requisito 3: Autorización en Firestore

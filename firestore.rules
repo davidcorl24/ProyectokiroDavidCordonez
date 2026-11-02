@@ -18,8 +18,18 @@ service cloud.firestore {
       return signedIn() && userRole() == 'administrador';
     }
 
-    function activePeriodId() {
-      return get(/databases/$(database)/documents/configuracion/global).data.periodoActivoId;
+    function hasActivePeriod(periodId) {
+      let configPath = /databases/$(database)/documents/configuracion/global;
+      return periodId is string
+        && periodId.size() > 0
+        && exists(configPath)
+        && get(configPath).data.get('periodoActivoId', '') == periodId;
+    }
+
+    function familyAlreadyDeliveredThisPeriod(periodId) {
+      return resource.data.get('periodoDistribucionId', '') == periodId
+        && (resource.data.get('entregasEnPeriodo', 0) > 0
+          || resource.data.get('entregado', false) == true);
     }
 
     match /voluntarios/{voluntarioId} {
@@ -42,7 +52,11 @@ service cloud.firestore {
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cantidad', 'estado'])
         && request.resource.data.cantidad is int
-        && request.resource.data.cantidad >= 0;
+        && request.resource.data.cantidad >= 0
+        && request.resource.data.cantidad < resource.data.cantidad
+        && (request.resource.data.cantidad == 0
+          ? request.resource.data.estado == 'sinstock'
+          : request.resource.data.estado == resource.data.estado);
       allow delete: if isCoordinator();
     }
 
@@ -53,23 +67,41 @@ service cloud.firestore {
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['entregado', 'fechaEntrega', 'segundaEntrega', 'periodoDistribucionId', 'entregasEnPeriodo'])
-        && request.resource.data.periodoDistribucionId == activePeriodId()
-        && (resource.data.get('periodoDistribucionId', '') != activePeriodId()
-          || resource.data.get('entregado', false) != true
+        && request.resource.data.get('entregado', false) == true
+        && request.resource.data.get('fechaEntrega', '') is string
+        && request.resource.data.get('segundaEntrega', false) is bool
+        && request.resource.data.get('entregasEnPeriodo', 0) is int
+        && request.resource.data.get('entregasEnPeriodo', 0) > 0
+        && hasActivePeriod(request.resource.data.get('periodoDistribucionId', ''))
+        && (!familyAlreadyDeliveredThisPeriod(request.resource.data.get('periodoDistribucionId', ''))
           || isCoordinator());
     }
 
     match /registrosEntrega/{registroId} {
       allow read: if signedIn();
       allow create: if signedIn()
-        && request.resource.data.periodoDistribucionId == activePeriodId()
+        && hasActivePeriod(request.resource.data.get('periodoDistribucionId', ''))
+        && request.resource.data.get('familiaId', '') is string
+        && request.resource.data.get('familiaNombre', '') is string
+        && request.resource.data.get('fechaEntrega', '') is string
+        && request.resource.data.get('articulosEntregados', []) is list
+        && request.resource.data.get('articulosEntregados', []).size() > 0
+        && request.resource.data.get('confirmadaPorCoordinador', false) is bool
         && (!request.resource.data.get('confirmadaPorCoordinador', false) || isCoordinator());
       allow update: if isCoordinator();
       allow delete: if isAdministrator();
     }
 
     match /movimientosAlmacen/{movimientoId} {
-      allow read, create: if signedIn();
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.get('cantidad', 0) is int
+        && request.resource.data.get('cantidad', 0) > 0
+        && request.resource.data.get('motivo', '') in [
+          'donacion_recibida',
+          'entrega',
+          'descarte_caducidad'
+        ];
       allow update, delete: if false;
     }
 
