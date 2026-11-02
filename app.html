@@ -143,6 +143,11 @@
     .check-group { display:flex; flex-wrap:wrap; gap:0.5rem; }
     .check-item { display:flex; align-items:center; gap:0.3rem; font-size:0.82rem; color:#4a6b52; cursor:pointer; }
     .check-item input[type=checkbox] { accent-color:#2D7D46; width:15px; height:15px; cursor:pointer; }
+    .delivery-item-row { display:grid; grid-template-columns:minmax(0, 1fr) 100px; gap:0.75rem; align-items:center; padding:0.5rem 0.65rem; border:1px solid #e2eee5; border-radius:8px; }
+    .delivery-item-select { display:flex; align-items:center; gap:0.55rem; min-width:0; font-size:0.82rem; color:#4a6b52; cursor:pointer; }
+    .delivery-item-select input[type=checkbox] { accent-color:#2D7D46; width:16px; height:16px; flex-shrink:0; }
+    .delivery-item-quantity { min-height:38px; padding:0.4rem 0.55rem; text-align:center; }
+    .delivery-item-quantity:disabled { background:#f3f6f4; color:#9eb8a4; }
     .articulo-row { display:grid; grid-template-columns:1fr 80px 130px; gap:0.5rem; align-items:end; margin-bottom:0.5rem; }
     .warn-box { background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:0.75rem; font-size:0.8rem; color:#c2410c; }
     .info-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:0.75rem; font-size:0.8rem; color:#15803d; }
@@ -246,6 +251,10 @@
   <button class="nav-item" data-section="notificaciones" onclick="navTo('notificaciones')">
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2a5 5 0 0 1 5 5v2.5l1.5 2.5H2.5L4 9.5V7a5 5 0 0 1 5-5z" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M7.5 15.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>
     Notificaciones
+  </button>
+  <button class="nav-item" data-section="comprobantes" onclick="navTo('comprobantes')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 2h7l3 3v11H4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M11 2v4h4M6.5 9h5M6.5 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Comprobantes PDF
   </button>
 </nav>
 
@@ -482,6 +491,19 @@
   </div>
 </section>
 
+<!-- COMPROBANTES DE ENTREGA -->
+<section class="section" id="sec-comprobantes">
+  <div class="page-header">
+    <div><h1>Comprobantes de entrega</h1><p>Consulta o imprime los comprobantes en PDF.</p></div>
+  </div>
+  <div class="table-wrap">
+    <table id="tabla-comprobantes">
+      <thead><tr><th>Folio</th><th>Familia</th><th>Fecha</th><th>Artículos</th><th>Acción</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
 </main>
 </div><!-- /app-body -->
 
@@ -697,7 +719,7 @@
       <div class="form-group">
         <label class="form-label">Artículos a entregar</label>
         <div id="ne-articulos" class="check-group" style="flex-direction:column;gap:0.4rem"></div>
-        <span class="form-hint" id="ne-articulos-hint"></span>
+        <span class="form-hint" id="ne-articulos-hint">Selecciona los artículos e indica cuántas unidades entregar (sin superar las disponibles).</span>
       </div>
     </div>
     <div class="modal-footer">
@@ -903,10 +925,16 @@
           const delivery = {
             id: deliveryRef.id,
             familiaId: options.familyId,
+            familiaNombre: family.nombre || 'Familia beneficiaria',
             periodoDistribucionId: options.periodId,
+            fechaEntrega: options.fechaEntrega,
             fechaHora: serverTimestamp(),
-            articulosEntregados: options.items.map(function(item) {
-              return { articuloId: String(item.id), cantidad: item.quantity };
+            articulosEntregados: options.items.map(function(item, index) {
+              return {
+                articuloId: String(item.id),
+                nombre: updatedItems[index].nombre || 'Artículo',
+                cantidad: item.quantity
+              };
             }),
             voluntarioId: options.volunteerId,
             confirmadaPorCoordinador: segundaEntrega
@@ -1041,6 +1069,7 @@ window.recibirSnapshotFirestore = function(collectionName, records) {
   }
   if (stateKey === 'almacen') renderAlmacen();
   if (stateKey === 'familias') renderFamilias();
+  if (stateKey === 'entregas') renderComprobantes();
   if (stateKey === 'configuracion') renderFamilias();
   if (stateKey === 'recibos') renderRecibos();
   renderMetricasDashboard();
@@ -1382,9 +1411,18 @@ function renderFamilias() {
       : entregadaEstePeriodo
         ? '<span class="badge badge-verde">✓ Entregado</span>'
         : '<span class="badge badge-naranja">Pendiente</span>';
-    var accion = !entregadaEstePeriodo
-      ? '<button class="btn btn-sm btn-primary" data-family-id="' + escHtml(f.id) + '" onclick="abrirNuevaEntrega(this.dataset.familyId)">Registrar</button>'
-      : '—';
+    var accion;
+    if (!entregadaEstePeriodo) {
+      accion = '<button class="btn btn-sm btn-primary" data-family-id="' + escHtml(f.id) + '" onclick="abrirNuevaEntrega(this.dataset.familyId)">Registrar</button>';
+    } else {
+      var ultimaEntrega = state.entregas.find(function(entrega) {
+        return String(entrega.familiaId) === String(f.id)
+          && entrega.periodoDistribucionId === periodoActualId();
+      });
+      accion = ultimaEntrega
+        ? '<button class="btn btn-sm btn-outline" data-delivery-id="' + escHtml(ultimaEntrega.id) + '" onclick="imprimirComprobanteEntrega(this.dataset.deliveryId)">Comprobante</button>'
+        : '—';
+    }
     return '<tr><td>' + escHtml(f.nombre) + '</td><td>' + f.miembros + '</td><td>' + badge + '</td><td>' + (f.fechaEntrega || '—') + '</td><td>' + accion + '</td></tr>';
   }).join('');
 }
@@ -1401,6 +1439,50 @@ function renderRecibos() {
       : '<button class="btn btn-sm btn-outline" disabled>📄 PDF</button>';
     return '<tr><td><span class="td-mono">' + escHtml(r.folio) + '</span></td><td>' + escHtml(r.donante) + '</td><td>' + formatFecha(r.fechaDonacion) + '</td><td>' + formatFecha(r.fechaGen) + '</td><td>' + estadoBadge + '</td><td>' + btnPDF + '</td></tr>';
   }).join('');
+}
+
+function renderComprobantes() {
+  var tbody = document.querySelector('#tabla-comprobantes tbody');
+  if (!tbody) return;
+  var entregas = state.entregas.slice().sort(function(a, b) {
+    return obtenerFechaEntrega(b) - obtenerFechaEntrega(a);
+  });
+  if (!entregas.length) {
+    tbody.innerHTML = '<tr><td colspan="5">Todavía no hay comprobantes de entrega.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = entregas.map(function(entrega) {
+    var articulos = Array.isArray(entrega.articulosEntregados) ? entrega.articulosEntregados : [];
+    var resumen = articulos.map(function(item) {
+      var articulo = state.almacen.find(function(inventario) {
+        return String(inventario.id) === String(item.articuloId);
+      });
+      return (item.nombre || (articulo && articulo.nombre) || 'Artículo') + ' × ' + item.cantidad;
+    }).join(', ');
+    var folio = 'ENT-' + String(entrega.id).slice(0, 8).toUpperCase();
+    return '<tr><td><span class="td-mono">' + escHtml(folio) + '</span></td>' +
+      '<td>' + escHtml(entrega.familiaNombre || 'Familia beneficiaria') + '</td>' +
+      '<td>' + escHtml(fechaEntregaVisible(entrega)) + '</td>' +
+      '<td>' + escHtml(resumen || '—') + '</td>' +
+      '<td><button class="btn btn-sm btn-outline" data-delivery-id="' + escHtml(entrega.id) + '" onclick="imprimirComprobanteEntrega(this.dataset.deliveryId)">Ver PDF</button></td></tr>';
+  }).join('');
+}
+
+function obtenerFechaEntrega(entrega) {
+  var fecha = entrega.fechaHora;
+  if (fecha && typeof fecha.toDate === 'function') fecha = fecha.toDate();
+  else if (!(fecha instanceof Date)) fecha = fecha ? new Date(fecha) : new Date(entrega.fechaEntrega || 0);
+  return isNaN(fecha.getTime()) ? 0 : fecha.getTime();
+}
+
+function fechaEntregaVisible(entrega) {
+  if (entrega.fechaEntrega) return entrega.fechaEntrega;
+  var fecha = obtenerFechaEntrega(entrega);
+  return fecha ? new Date(fecha).toLocaleString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  }) : '—';
 }
 
 // -------------------------------------------------------
@@ -1699,10 +1781,19 @@ async function guardarEntregaCompleta(familia, articulos) {
       delivery: {
         id: nuevoId(),
         familiaId: familia.id,
+        familiaNombre: familia.nombre,
         periodoDistribucionId: periodId,
+        fechaEntrega: fechaEntrega,
         fechaHora: ahora.toISOString(),
         articulosEntregados: articulos.map(function(item) {
-          return { articuloId: String(item.id), cantidad: item.quantity };
+          var articulo = state.almacen.find(function(inventario) {
+            return String(inventario.id) === String(item.id);
+          });
+          return {
+            articuloId: String(item.id),
+            nombre: articulo ? articulo.nombre : 'Artículo',
+            cantidad: item.quantity
+          };
         }),
         voluntarioId: sessionStorage.getItem('bab_uid') || 'demo',
         confirmadaPorCoordinador: deliveredAlready
@@ -1729,7 +1820,9 @@ async function guardarEntregaCompleta(familia, articulos) {
   if (!state.entregas.some(function(item) { return item.id === resultado.delivery.id; })) state.entregas.unshift(resultado.delivery);
   renderAlmacen();
   renderFamilias();
+  renderComprobantes();
   renderMetricasDashboard();
+  imprimirComprobanteEntrega(resultado.delivery.id);
   return resultado;
 }
 
@@ -1889,9 +1982,36 @@ function abrirNuevaEntrega(familiaId) {
   if (disponibles.length === 0) {
     artDiv.innerHTML = '<span class="form-hint">No hay artículos disponibles en el almacén</span>';
   } else {
-    artDiv.innerHTML = disponibles.map(function(a){
-      return '<label class="check-item"><input type="checkbox" name="ne-art" value="' + a.id + '"> ' + escHtml(a.nombre) + ' (' + a.cantidad + ' uds.)</label>';
-    }).join('');
+    artDiv.replaceChildren();
+    disponibles.forEach(function(a) {
+      var row = document.createElement('div');
+      row.className = 'delivery-item-row';
+
+      var label = document.createElement('label');
+      label.className = 'delivery-item-select';
+      var checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.name = 'ne-art';
+      checkbox.value = String(a.id);
+      checkbox.addEventListener('change', function() {
+        quantityInput.disabled = !checkbox.checked;
+      });
+      var description = document.createElement('span');
+      description.textContent = a.nombre + ' (' + a.cantidad + ' disponibles)';
+      label.append(checkbox, description);
+
+      var quantityInput = document.createElement('input');
+      quantityInput.className = 'form-input delivery-item-quantity';
+      quantityInput.type = 'number';
+      quantityInput.min = '1';
+      quantityInput.max = String(a.cantidad);
+      quantityInput.value = '1';
+      quantityInput.disabled = true;
+      quantityInput.setAttribute('aria-label', 'Cantidad de ' + a.nombre + ' a entregar');
+
+      row.append(label, quantityInput);
+      artDiv.appendChild(row);
+    });
   }
 
   // Si ya viene con familia pre-seleccionada, mostrar warning si aplica
@@ -1950,9 +2070,26 @@ async function guardarNuevaEntrega() {
     showToast('Solo una persona coordinadora puede autorizar una segunda entrega.'); return;
   }
   var seleccionados = Array.from(document.querySelectorAll('#ne-articulos input[name="ne-art"]:checked')).map(function(input) {
-    return { id: input.value, quantity: 1 };
+    var quantityInput = input.parentElement.nextElementSibling;
+    return {
+      id: input.value,
+      quantity: Number(quantityInput.value),
+      maxQuantity: Number(quantityInput.max),
+      input: quantityInput
+    };
   });
   if (seleccionados.length === 0) { showToast('Selecciona al menos un artículo para la entrega.'); return; }
+  var cantidadInvalida = seleccionados.find(function(item) {
+    return !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > item.maxQuantity;
+  });
+  if (cantidadInvalida) {
+    cantidadInvalida.input.focus();
+    showToast('Indica una cantidad entre 1 y ' + cantidadInvalida.maxQuantity + ' unidades.');
+    return;
+  }
+  seleccionados = seleccionados.map(function(item) {
+    return { id: item.id, quantity: item.quantity };
+  });
   try {
     await guardarEntregaCompleta(familia, seleccionados);
   } catch (error) {
@@ -1966,6 +2103,57 @@ async function guardarNuevaEntrega() {
 // -------------------------------------------------------
 // RECIBOS
 // -------------------------------------------------------
+function imprimirComprobanteEntrega(id) {
+  var entrega = state.entregas.find(function(item) { return String(item.id) === String(id); });
+  if (!entrega) {
+    showToast('No se encontró el comprobante de esta entrega.');
+    return;
+  }
+
+  var articulos = Array.isArray(entrega.articulosEntregados) ? entrega.articulosEntregados : [];
+  var filas = articulos.map(function(item) {
+    var inventario = state.almacen.find(function(articulo) {
+      return String(articulo.id) === String(item.articuloId);
+    });
+    var nombre = item.nombre || (inventario && inventario.nombre) || 'Artículo';
+    return '<tr><td>' + escHtml(nombre) + '</td><td>' + escHtml(item.cantidad) + '</td></tr>';
+  }).join('');
+  var totalUnidades = articulos.reduce(function(total, item) {
+    return total + (Number(item.cantidad) || 0);
+  }, 0);
+  var fecha = entrega.fechaEntrega;
+  if (!fecha && entrega.fechaHora) {
+    var fechaHora = typeof entrega.fechaHora.toDate === 'function'
+      ? entrega.fechaHora.toDate()
+      : new Date(entrega.fechaHora);
+    if (!isNaN(fechaHora.getTime())) {
+      fecha = fechaHora.toLocaleString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  }
+  fecha = fecha || '—';
+  var folio = 'ENT-' + String(entrega.id).slice(0, 8).toUpperCase();
+  var div = document.getElementById('print-recibo');
+  div.innerHTML =
+    '<h2>Banco de Alimentos del Barrio</h2>' +
+    '<p style="margin-bottom:0.3rem;color:#555">COMPROBANTE DE ENTREGA DE ALIMENTOS</p>' +
+    '<hr style="margin:0.75rem 0;border:none;border-top:1px solid #ccc">' +
+    '<div class="recibo-folio">Folio: ' + escHtml(folio) + '</div>' +
+    '<p><strong>Familia beneficiaria:</strong> ' + escHtml(entrega.familiaNombre || 'Familia beneficiaria') + '</p>' +
+    '<p><strong>Fecha de entrega:</strong> ' + escHtml(fecha) + '</p>' +
+    '<table><thead><tr><th>Artículo</th><th>Cantidad (unidades)</th></tr></thead>' +
+    '<tbody>' + filas + '</tbody>' +
+    '<tfoot><tr><th>Total de unidades</th><th>' + totalUnidades + '</th></tr></tfoot></table>' +
+    '<p class="recibo-footer">Comprobante de recepción de alimentos. No es un recibo fiscal de donación.</p>' +
+    '<p style="margin-top:3rem">Firma de quien recibe: __________________________________</p>';
+  window.print();
+}
+
 function toggleOtroDonante() {
   var sel = document.getElementById('rec-donante-sel');
   var wrap = document.getElementById('rec-donante-otro-wrap');
@@ -2116,6 +2304,7 @@ window.addEventListener('DOMContentLoaded', function() {
   renderAlmacen();
   renderFamilias();
   renderRecibos();
+  renderComprobantes();
   renderMetricasDashboard();
 
   // Mostrar dashboard

@@ -28,9 +28,10 @@ La aplicación sigue siendo HTML/JavaScript estático. Firebase Authentication i
 3. Las colecciones permitidas se suscriben mediante `onSnapshot`. Las vistas se actualizan con datos iniciales, cambios remotos y escrituras optimistas de Firestore.
 4. Las escrituras documentales usan caché persistente. Las operaciones que requieren consistencia concurrente usan transacciones y necesitan conexión.
 5. Al iniciar sesión, un administrador inicializa o avanza `configuracion/global.periodoActivoId`; las reglas validan las entregas contra ese valor.
-6. Los folios se reservan leyendo y avanzando `contadores/recibos-AÑO` dentro de una transacción; si el folio propuesto ya existe, se avanza hasta encontrar uno disponible.
-7. Las reglas de `firestore.rules` son la frontera de seguridad. Las comprobaciones de interfaz solo mejoran la experiencia y no sustituyen las reglas.
-8. En `?demo=1` no se inicializa el adaptador de datos Firestore.
+6. Cada `registrosEntrega` conserva el nombre de la familia, la fecha y el nombre y cantidad de cada artículo; la aplicación imprime un comprobante de entrega distinto del recibo fiscal de donación.
+7. Los folios fiscales de donación se reservan leyendo y avanzando `contadores/recibos-AÑO` dentro de una transacción; si el folio propuesto ya existe, se avanza hasta encontrar uno disponible.
+8. Las reglas de `firestore.rules` son la frontera de seguridad. Las comprobaciones de interfaz solo mejoran la experiencia y no sustituyen las reglas.
+9. En `?demo=1` no se inicializa el adaptador de datos Firestore.
 
 ## Seguridad y despliegue
 

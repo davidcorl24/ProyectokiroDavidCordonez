@@ -34,6 +34,8 @@ Esta SPEC define el inventario por lote y caducidad, la selección FEFO y el reg
 6. IF la familia ya recibió una entrega en el período activo, THEN solo un coordinador o administrador podrá autorizar otra; la autorización se validará en la UI, la transacción y las reglas Firestore.
 7. THE Sistema SHALL marcar la familia como pendiente al cambiar `periodoActivoId` y conservar los registros de períodos anteriores.
 8. WHEN una entrega termina, THE Sistema SHALL mostrar un mensaje de confirmación y actualizar el avance de familias en un máximo de 30 segundos.
+9. WHEN se prepara una entrega, THE Sistema SHALL permitir indicar por separado la cantidad de cada artículo seleccionado, limitada a las unidades disponibles; solo esas cantidades SHALL descontarse del almacén y guardarse en el registro de entrega.
+10. WHEN se registra una entrega, THE Sistema SHALL generar un comprobante imprimible para la familia con folio, fecha, artículos y cantidades; este comprobante SHALL distinguirse del recibo fiscal de donación.
 
 ### Requisito 3: Movimientos y trazabilidad
 
