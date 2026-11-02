@@ -908,16 +908,28 @@
     window.firebaseSignOut = function() { return signOut(auth); };
 
     onAuthStateChanged(auth, async function(user) {
-      const expiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
-      if (!user || expiresAt <= Date.now() || expiresAt > Date.now() + sessionDurationMs) {
+      if (!user) {
         localStorage.removeItem('bab_auth_expires_at');
-        if (user) signOut(auth);
         window.location.replace('index.html');
         return;
       }
 
       try {
         const tokenResult = await getIdTokenResult(user);
+        const authTime = Number(tokenResult.claims.auth_time) * 1000;
+        const maxExpiresAt = authTime + sessionDurationMs;
+        const storedExpiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
+        if (!authTime || maxExpiresAt <= Date.now() || (storedExpiresAt > 0 && storedExpiresAt <= Date.now())) {
+          localStorage.removeItem('bab_auth_expires_at');
+          await signOut(auth);
+          window.location.replace('index.html');
+          return;
+        }
+
+        const expiresAt = storedExpiresAt > Date.now() && storedExpiresAt <= maxExpiresAt
+          ? storedExpiresAt
+          : maxExpiresAt;
+        localStorage.setItem('bab_auth_expires_at', String(expiresAt));
         const role = tokenResult.claims.rol || tokenResult.claims.role || 'voluntario';
         window.actualizarPermisosUsuario(role);
         window.iniciarDatosFirestore(role);

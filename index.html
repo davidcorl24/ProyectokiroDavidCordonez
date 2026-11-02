@@ -137,6 +137,7 @@
       font-size: 0.82rem;
       line-height: 1.45;
       text-align: center;
+      overflow-wrap: anywhere;
     }
     .btn-google .spinner {
       display: none;
@@ -290,6 +291,7 @@
   import {
     browserLocalPersistence,
     getAuth,
+    getIdTokenResult,
     getRedirectResult,
     GoogleAuthProvider,
     onAuthStateChanged,
@@ -314,31 +316,50 @@
   } else {
     const auth = getAuth(initializeApp(config));
     const provider = new GoogleAuthProvider();
+    let finishingSignIn = false;
     provider.setCustomParameters({ prompt: 'select_account' });
 
+    function finishSignIn(user) {
+      if (!user || finishingSignIn) return;
+      finishingSignIn = true;
+
+      getIdTokenResult(user).then(function(tokenResult) {
+        const authTime = Number(tokenResult.claims.auth_time) * 1000;
+        const maxExpiresAt = authTime + sessionDurationMs;
+        const storedExpiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
+        if (!authTime || maxExpiresAt <= Date.now()) {
+          localStorage.removeItem('bab_auth_expires_at');
+          return signOut(auth).then(function() {
+            showError('La sesión venció. Vuelve a iniciar sesión con Google.');
+          });
+        }
+
+        const expiresAt = storedExpiresAt > Date.now() && storedExpiresAt <= maxExpiresAt
+          ? storedExpiresAt
+          : maxExpiresAt;
+        localStorage.setItem('bab_auth_expires_at', String(expiresAt));
+        sessionStorage.setItem('bab_user', user.displayName || user.email || 'Usuario');
+        sessionStorage.setItem('bab_email', user.email || '');
+        sessionStorage.setItem('bab_photo', user.photoURL || '');
+        sessionStorage.setItem('bab_uid', user.uid);
+        window.location.replace('app.html');
+      }).catch(function() {
+        finishingSignIn = false;
+        showError('No se pudo validar la sesión de Google. Inténtalo de nuevo.');
+      });
+    }
+
     setPersistence(auth, browserLocalPersistence).then(function() {
+      onAuthStateChanged(auth, finishSignIn);
       return getRedirectResult(auth);
     }).then(function(result) {
-      if (result && result.user) {
-        localStorage.setItem('bab_auth_expires_at', String(Date.now() + sessionDurationMs));
-        sessionStorage.setItem('bab_user', result.user.displayName || result.user.email || 'Usuario');
-        sessionStorage.setItem('bab_email', result.user.email || '');
-        sessionStorage.setItem('bab_photo', result.user.photoURL || '');
-        sessionStorage.setItem('bab_uid', result.user.uid);
+      if (result && result.user) finishSignIn(result.user);
+    }).catch(function(error) {
+      if (error.code === 'auth/unauthorized-domain') {
+        showError('Firebase no autoriza el dominio "' + window.location.hostname + '". Añádelo en Firebase Console > Authentication > Settings > Authorized domains, sin http, ruta ni puerto.');
+      } else {
+        showError('No se pudo completar el acceso con Google. Inténtalo de nuevo.');
       }
-
-      onAuthStateChanged(auth, function(user) {
-        if (!user) return;
-        const expiresAt = Number(localStorage.getItem('bab_auth_expires_at'));
-        if (expiresAt > Date.now()) {
-          window.location.replace('app.html');
-        } else {
-          localStorage.removeItem('bab_auth_expires_at');
-          signOut(auth);
-        }
-      });
-    }).catch(function() {
-      showError('No se pudo preparar el acceso. Inténtalo de nuevo.');
     });
 
     btn.addEventListener('click', async function() {
@@ -350,7 +371,7 @@
         await signInWithRedirect(auth, provider);
       } catch (error) {
         if (error.code === 'auth/unauthorized-domain') {
-          showError('Este sitio no está autorizado para iniciar sesión.');
+          showError('Firebase no autoriza el dominio "' + window.location.hostname + '". Añádelo en Firebase Console > Authentication > Settings > Authorized domains, sin http, ruta ni puerto.');
         } else {
           showError('El acceso no se completó. Puedes intentarlo de nuevo.');
         }
