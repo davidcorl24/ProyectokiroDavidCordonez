@@ -148,6 +148,8 @@
     .info-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:0.75rem; font-size:0.8rem; color:#15803d; }
     .search-results { border:1.5px solid #d4e8da; border-radius:8px; overflow:hidden; }
     .search-result-item { padding:0.6rem 0.85rem; cursor:pointer; font-size:0.875rem; color:#1a2e1e; border-bottom:1px solid #f0f4f1; }
+    .family-option { display:block; width:100%; border:0; background:#fff; text-align:left; font:inherit; }
+    .family-option:hover, .family-option:focus { background:#f0fdf4; }
     .search-result-item:last-child { border-bottom:none; }
     .search-result-item:hover { background:#f0fdf4; }
     /* TOAST */
@@ -366,6 +368,7 @@
       <h1>Registro de Entregas <span class="badge badge-naranja" id="badge-pendientes" style="font-size:0.72rem;vertical-align:middle;margin-left:0.4rem">0 pendientes</span></h1>
       <p id="periodo-distribucion-label">Cargando período…</p>
     </div>
+    <button class="btn btn-outline" type="button" data-role-required="coordinador" onclick="openModal('modal-familia')" hidden>Añadir familia</button>
     <button class="btn btn-primary" onclick="abrirNuevaEntrega(null)">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
       Nueva entrega
@@ -628,10 +631,12 @@
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label class="form-label" for="entregar-familia">¿A qué familia?</label>
-        <select class="form-input" id="entregar-familia">
-          <option value="">— Selecciona familia —</option>
-        </select>
+        <label class="form-label" for="entregar-familia-buscar">¿A qué familia?</label>
+        <input class="form-input" type="search" id="entregar-familia-buscar" placeholder="Escribe para buscar una familia…" oninput="buscarFamiliaParaAlmacen()" autocomplete="off" />
+        <input type="hidden" id="entregar-familia-id" value="" />
+        <div class="search-results" id="entregar-familia-resultados" style="display:none" role="listbox" aria-label="Familias encontradas"></div>
+        <p class="form-hint" id="entregar-familias-vacio" hidden>No hay familias registradas todavía.</p>
+        <button type="button" class="btn btn-outline btn-sm" id="entregar-agregar-familia" data-role-required="coordinador" onclick="openModal('modal-familia')" hidden>Añadir familia</button>
       </div>
       <div class="form-group">
         <label class="form-label" for="entregar-cantidad">Cantidad a entregar</label>
@@ -643,6 +648,32 @@
       <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-entregar')">Cancelar</button>
       <button type="button" class="btn btn-primary btn-sm" onclick="guardarEntrega()">Registrar entrega</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: AÑADIR FAMILIA ===== -->
+<div class="modal-overlay" id="modal-familia" onclick="handleOverlayClick(event,'modal-familia')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Añadir familia</span>
+      <button class="modal-close" onclick="closeModal('modal-familia')" aria-label="Cerrar">✕</button>
+    </div>
+    <form id="form-familia" onsubmit="return false;">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="familia-nombre">Nombre de la familia *</label>
+          <input class="form-input" type="text" id="familia-nombre" maxlength="100" placeholder="Ej: Familia García" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="familia-miembros">Personas en el hogar *</label>
+          <input class="form-input" type="number" id="familia-miembros" min="1" max="20" value="1" required />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('modal-familia')">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="guardarFamilia()">Guardar familia</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1099,6 +1130,7 @@ function actualizarPerfilUsuario(nombre, foto) {
 function actualizarPermisosUsuario(role) {
   var rolesValidos = ['voluntario', 'coordinador', 'administrador'];
   window.babRole = rolesValidos.indexOf(role) !== -1 ? role : 'voluntario';
+  actualizarAccionesCoordinacion();
   if (window.babRole === 'administrador') {
     document.querySelector('[data-section="recibos"]').hidden = false;
     document.getElementById('sec-recibos').hidden = false;
@@ -1107,6 +1139,12 @@ function actualizarPermisosUsuario(role) {
 
 function esCoordinador() {
   return window.babRole === 'coordinador' || window.babRole === 'administrador';
+}
+
+function actualizarAccionesCoordinacion() {
+  document.querySelectorAll('[data-role-required="coordinador"]').forEach(function(element) {
+    element.hidden = !esCoordinador();
+  });
 }
 
 function esAdministrador() {
@@ -1165,12 +1203,16 @@ function openModal(id) {
     showToast('Solo una persona administradora puede generar recibos.');
     return;
   }
+  if (id === 'modal-familia' && !esCoordinador()) {
+    showToast('Solo una persona coordinadora puede registrar familias.');
+    return;
+  }
   document.getElementById(id).classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
-  document.body.style.overflow = '';
+  document.body.style.overflow = document.querySelector('.modal-overlay.open') ? 'hidden' : '';
 }
 function handleOverlayClick(e, id) {
   if (e.target === document.getElementById(id)) closeModal(id);
@@ -1692,6 +1734,105 @@ async function guardarEntregaCompleta(familia, articulos) {
   return resultado;
 }
 
+function poblarSelectFamiliasEntrega(selectedId) {
+  var input = document.getElementById('entregar-familia-buscar');
+  var idInput = document.getElementById('entregar-familia-id');
+  var results = document.getElementById('entregar-familia-resultados');
+  var vacio = document.getElementById('entregar-familias-vacio');
+  var addButton = document.getElementById('entregar-agregar-familia');
+  input.value = '';
+  idInput.value = '';
+  results.replaceChildren();
+  results.style.display = 'none';
+  vacio.hidden = state.familias.length > 0;
+  addButton.hidden = !esCoordinador();
+  if (selectedId !== undefined) seleccionarFamiliaParaAlmacen(selectedId);
+}
+
+function buscarFamiliaParaAlmacen() {
+  var input = document.getElementById('entregar-familia-buscar');
+  var query = input.value.trim().toLocaleLowerCase('es');
+  var idInput = document.getElementById('entregar-familia-id');
+  var results = document.getElementById('entregar-familia-resultados');
+  idInput.value = '';
+  results.replaceChildren();
+  if (!query) {
+    results.style.display = 'none';
+    return;
+  }
+
+  var matches = state.familias.filter(function(familia) {
+    return familia.nombre.toLocaleLowerCase('es').includes(query);
+  });
+  if (!matches.length) {
+    var empty = document.createElement('div');
+    empty.className = 'search-result-item';
+    empty.textContent = 'No se encontró esa familia.';
+    results.appendChild(empty);
+  } else {
+    matches.forEach(function(familia) {
+      var option = document.createElement('button');
+      option.type = 'button';
+      option.className = 'search-result-item family-option';
+      option.setAttribute('role', 'option');
+      option.textContent = familia.nombre + ' (' + familia.miembros + ' miembros)';
+      option.addEventListener('click', function() { seleccionarFamiliaParaAlmacen(familia.id); });
+      results.appendChild(option);
+    });
+  }
+  results.style.display = 'block';
+}
+
+function seleccionarFamiliaParaAlmacen(id) {
+  var familia = state.familias.find(function(item) { return String(item.id) === String(id); });
+  if (!familia) return;
+  document.getElementById('entregar-familia-id').value = familia.id;
+  document.getElementById('entregar-familia-buscar').value = familia.nombre;
+  var results = document.getElementById('entregar-familia-resultados');
+  results.replaceChildren();
+  results.style.display = 'none';
+}
+
+async function guardarFamilia() {
+  if (!esCoordinador()) {
+    showToast('Solo una persona coordinadora puede registrar familias.');
+    return;
+  }
+  var nombre = document.getElementById('familia-nombre').value.trim();
+  var miembros = Number(document.getElementById('familia-miembros').value);
+  if (!nombre) { marcarError('familia-nombre', 'Escribe el nombre de la familia'); return; }
+  if (!Number.isInteger(miembros) || miembros < 1 || miembros > 20) {
+    marcarError('familia-miembros', 'Indica entre 1 y 20 personas');
+    return;
+  }
+  if (state.familias.some(function(familia) { return familia.nombre.trim().toLowerCase() === nombre.toLowerCase(); })) {
+    marcarError('familia-nombre', 'Ya existe una familia con ese nombre');
+    return;
+  }
+
+  var nueva = {
+    id: nuevoId(),
+    nombre: nombre,
+    miembros: miembros,
+    entregado: false,
+    fechaEntrega: '',
+    segundaEntrega: false
+  };
+  try {
+    await guardarDocumentoFirestore('familiasBeneficiarias', nueva);
+  } catch (error) {
+    showToast('No se pudo guardar la familia. Comprueba tus permisos y conexión.');
+    return;
+  }
+
+  if (!state.familias.some(function(familia) { return String(familia.id) === String(nueva.id); })) state.familias.push(nueva);
+  renderFamilias();
+  poblarSelectFamiliasEntrega(nueva.id);
+  document.getElementById('form-familia').reset();
+  closeModal('modal-familia');
+  showToast('Familia añadida correctamente');
+}
+
 function abrirEntregarModal(id) {
   currentAlmacenId = id;
   var item = state.almacen.find(function(a){ return String(a.id) === String(id); });
@@ -1701,16 +1842,12 @@ function abrirEntregarModal(id) {
   cantInput.max = item.cantidad;
   cantInput.value = 1;
   document.getElementById('entregar-max').textContent = 'Máximo disponible: ' + item.cantidad;
-  var sel = document.getElementById('entregar-familia');
-  sel.innerHTML = '<option value="">— Selecciona familia —</option>';
-  state.familias.forEach(function(f){
-    sel.innerHTML += '<option value="' + f.id + '">' + escHtml(f.nombre) + '</option>';
-  });
+  poblarSelectFamiliasEntrega();
   openModal('modal-entregar');
 }
 
 async function guardarEntrega() {
-  var famVal = document.getElementById('entregar-familia').value;
+  var famVal = document.getElementById('entregar-familia-id').value;
   var cant   = parseInt(document.getElementById('entregar-cantidad').value, 10);
   var item   = state.almacen.find(function(a){ return String(a.id) === String(currentAlmacenId); });
   if (!item) return;
@@ -1962,6 +2099,8 @@ function cerrarSesion() {
 // INIT
 // -------------------------------------------------------
 window.addEventListener('DOMContentLoaded', function() {
+  actualizarAccionesCoordinacion();
+
   // Fecha dashboard
   var opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
   var el = document.getElementById('fecha-dashboard');
